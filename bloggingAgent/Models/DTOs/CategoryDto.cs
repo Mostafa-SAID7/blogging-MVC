@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace BloggingAgent.Models.DTOs
 {
     public class CategoryDto
@@ -9,8 +11,6 @@ namespace BloggingAgent.Models.DTOs
         public string Color { get; set; }
         public string Icon { get; set; }
         public int? ParentCategoryId { get; set; }
-        public CategoryDto ParentCategory { get; set; }
-        public List<CategoryDto> SubCategories { get; set; } = new List<CategoryDto>();
         public bool IsActive { get; set; }
         public int DisplayOrder { get; set; }
         public int PostCount { get; set; }
@@ -35,5 +35,12 @@ namespace BloggingAgent.Models.DTOs
         public int? ParentCategoryId { get; set; }
         public int DisplayOrder { get; set; }
         public bool IsActive { get; set; }
+    }
+
+    public class CategoryDetailViewModel
+    {
+        public CategoryDto Category { get; set; }
+        public List<BlogPostDto> Posts { get; set; } = new List<BlogPostDto>();
+        public int TotalPosts { get; set; }
     }
 }

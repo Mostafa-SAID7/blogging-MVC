@@ -1,41 +1,74 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BloggingAgent.Data.Repositories;
 using BloggingAgent.Models.Domain;
+using BloggingAgent.Models.DTOs;
+using BloggingAgent.Models.ViewModels;
+using BloggingAgent.Services.Cache;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace BloggingAgent.Controllers
 {
+    [Authorize]
     public class CategoryController : Controller
     {
         private readonly IRepository<Category> _categoryRepository;
         private readonly IRepository<BlogPost> _blogPostRepository;
-        private readonly ILogger<CategoryController> _logger;
+        private readonly ICacheService _cacheService;
 
         public CategoryController(
             IRepository<Category> categoryRepository,
             IRepository<BlogPost> blogPostRepository,
-            ILogger<CategoryController> logger)
+            ICacheService cacheService)
         {
             _categoryRepository = categoryRepository;
             _blogPostRepository = blogPostRepository;
-            _logger = logger;
+            _cacheService = cacheService;
         }
 
+        [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
+            const string cacheKey = "categories_index";
+            var cachedCategories = await _cacheService.GetAsync<List<CategoryDto>>(cacheKey);
+            if (cachedCategories != null)
+            {
+                return View(cachedCategories);
+            }
+
             var categories = await _categoryRepository.GetAllAsync();
             var activeCategories = categories.Where(c => c.IsActive)
                                            .OrderBy(c => c.DisplayOrder)
+                                           .ThenBy(c => c.Name)
                                            .ToList();
 
-            return View(activeCategories);
+            // Calculate post counts
+            foreach (var category in activeCategories)
+            {
+                category.PostCount = await GetPostCountForCategoryAsync(category.Id);
+            }
+
+            var categoryDtos = activeCategories.Select(MapToDto).ToList();
+
+            // Cache for 10 minutes
+            await _cacheService.SetAsync(cacheKey, categoryDtos, TimeSpan.FromMinutes(10));
+
+            return View(categoryDtos);
         }
 
+        [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> Details(string slug)
         {
+            var cacheKey = $"category_details_{slug}";
+            var cachedModel = await _cacheService.GetAsync<CategoryDetailViewModel>(cacheKey);
+            if (cachedModel != null)
+            {
+                return View(cachedModel);
+            }
+
             var category = (await _categoryRepository.GetAllAsync())
                           .FirstOrDefault(c => c.Slug == slug && c.IsActive);
 
@@ -46,49 +79,95 @@ namespace BloggingAgent.Controllers
 
             // Get posts in this category
             var posts = await _blogPostRepository.FindAsync(p =>
-                p.IsPublished &&
-                p.Tags.Any(tag => tag.Contains(category.Name.ToLower()))); // Simple tag-based categorization
+                p.Tags.Contains(category.Name) && p.IsPublished);
 
-            var viewModel = new CategoryDetailViewModel
+            var model = new CategoryDetailViewModel
             {
-                Category = category,
-                Posts = posts.OrderByDescending(p => p.CreatedAt).ToList()
+                Category = MapToDto(category),
+                Posts = posts.OrderByDescending(p => p.CreatedAt)
+                           .Select(p => new BlogPostDto
+                           {
+                               Id = p.Id,
+                               Title = p.Title,
+                               Slug = p.Slug,
+                               Excerpt = p.Excerpt,
+                               Author = p.Author,
+                               CreatedAt = p.CreatedAt,
+                               Tags = p.Tags
+                           }).ToList(),
+                TotalPosts = posts.Count()
             };
 
-            return View(viewModel);
+            // Cache for 5 minutes
+            await _cacheService.SetAsync(cacheKey, model, TimeSpan.FromMinutes(5));
+
+            return View(model);
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Manage()
+        {
+            var categories = await _categoryRepository.GetAllAsync();
+            var categoryDtos = categories.OrderBy(c => c.DisplayOrder)
+                                       .ThenBy(c => c.Name)
+                                       .Select(MapToDto)
+                                       .ToList();
+
+            return View(categoryDtos);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Administrator")]
         public IActionResult Create()
         {
-            return View();
+            return View(new CreateCategoryRequest());
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Category category)
+        [Authorize(Roles = "Administrator")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateCategoryRequest request)
         {
             if (!ModelState.IsValid)
             {
-                return View(category);
+                return View(request);
             }
 
-            // Generate slug if not provided
-            if (string.IsNullOrEmpty(category.Slug))
+            // Check if slug is unique
+            var existingCategory = (await _categoryRepository.GetAllAsync())
+                                  .FirstOrDefault(c => c.Slug == GenerateSlug(request.Name));
+
+            if (existingCategory != null)
             {
-                category.Slug = GenerateSlug(category.Name);
+                ModelState.AddModelError("Name", "A category with this name already exists.");
+                return View(request);
             }
 
-            category.IsActive = true;
-            category.DisplayOrder = await GetNextDisplayOrderAsync();
+            var category = new Category
+            {
+                Name = request.Name,
+                Slug = GenerateSlug(request.Name),
+                Description = request.Description,
+                Color = request.Color ?? "#007bff",
+                Icon = request.Icon ?? "fas fa-tag",
+                ParentCategoryId = request.ParentCategoryId,
+                DisplayOrder = request.DisplayOrder,
+                IsActive = true,
+                CreatedAt = System.DateTime.UtcNow
+            };
 
             await _categoryRepository.AddAsync(category);
 
-            _logger.LogInformation("Category created: {CategoryName}", category.Name);
+            // Clear cache
+            await _cacheService.RemoveAsync("categories_index");
 
-            return RedirectToAction("Index");
+            TempData["Success"] = "Category created successfully!";
+            return RedirectToAction("Manage");
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Edit(int id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
@@ -97,38 +176,73 @@ namespace BloggingAgent.Controllers
                 return NotFound();
             }
 
-            return View(category);
+            var model = new UpdateCategoryRequest
+            {
+                Name = category.Name,
+                Description = category.Description,
+                Color = category.Color,
+                Icon = category.Icon,
+                ParentCategoryId = category.ParentCategoryId,
+                DisplayOrder = category.DisplayOrder,
+                IsActive = category.IsActive
+            };
+
+            return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(Category category)
+        [Authorize(Roles = "Administrator")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, UpdateCategoryRequest request)
         {
             if (!ModelState.IsValid)
             {
-                return View(category);
+                return View(request);
             }
 
-            var existingCategory = await _categoryRepository.GetByIdAsync(category.Id);
-            if (existingCategory == null)
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null)
             {
                 return NotFound();
             }
 
-            existingCategory.Name = category.Name;
-            existingCategory.Slug = string.IsNullOrEmpty(category.Slug) ?
-                                   GenerateSlug(category.Name) : category.Slug;
-            existingCategory.Description = category.Description;
-            existingCategory.ParentCategoryId = category.ParentCategoryId;
-            existingCategory.DisplayOrder = category.DisplayOrder;
+            // Check slug uniqueness if name changed
+            if (category.Name != request.Name)
+            {
+                var newSlug = GenerateSlug(request.Name);
+                var existingCategory = (await _categoryRepository.GetAllAsync())
+                                      .FirstOrDefault(c => c.Slug == newSlug && c.Id != id);
 
-            await _categoryRepository.UpdateAsync(existingCategory);
+                if (existingCategory != null)
+                {
+                    ModelState.AddModelError("Name", "A category with this name already exists.");
+                    return View(request);
+                }
 
-            _logger.LogInformation("Category updated: {CategoryName}", category.Name);
+                category.Slug = newSlug;
+            }
 
-            return RedirectToAction("Index");
+            category.Name = request.Name;
+            category.Description = request.Description;
+            category.Color = request.Color;
+            category.Icon = request.Icon;
+            category.ParentCategoryId = request.ParentCategoryId;
+            category.DisplayOrder = request.DisplayOrder;
+            category.IsActive = request.IsActive;
+            category.UpdatedAt = System.DateTime.UtcNow;
+
+            await _categoryRepository.UpdateAsync(category);
+
+            // Clear cache
+            await _cacheService.RemoveAsync("categories_index");
+            await _cacheService.RemoveAsync($"category_details_{category.Slug}");
+
+            TempData["Success"] = "Category updated successfully!";
+            return RedirectToAction("Manage");
         }
 
         [HttpPost]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Delete(int id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
@@ -137,35 +251,69 @@ namespace BloggingAgent.Controllers
                 return NotFound();
             }
 
-            // Soft delete - mark as inactive
-            category.IsActive = false;
-            await _categoryRepository.UpdateAsync(category);
+            // Check if category has posts
+            var postCount = await GetPostCountForCategoryAsync(id);
+            if (postCount > 0)
+            {
+                TempData["Error"] = "Cannot delete category that contains posts. Please reassign or delete the posts first.";
+                return RedirectToAction("Manage");
+            }
 
-            _logger.LogInformation("Category deactivated: {CategoryName}", category.Name);
+            await _categoryRepository.DeleteAsync(id);
 
-            return RedirectToAction("Index");
+            // Clear cache
+            await _cacheService.RemoveAsync("categories_index");
+
+            TempData["Success"] = "Category deleted successfully!";
+            return RedirectToAction("Manage");
         }
 
         [HttpPost]
-        public async Task<IActionResult> Reorder(List<CategoryOrder> categoryOrders)
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> ToggleActive(int id)
         {
-            foreach (var order in categoryOrders)
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null)
             {
-                var category = await _categoryRepository.GetByIdAsync(order.Id);
-                if (category != null)
-                {
-                    category.DisplayOrder = order.Order;
-                    await _categoryRepository.UpdateAsync(category);
-                }
+                return NotFound();
             }
 
-            return Json(new { success = true });
+            category.IsActive = !category.IsActive;
+            category.UpdatedAt = System.DateTime.UtcNow;
+
+            await _categoryRepository.UpdateAsync(category);
+
+            // Clear cache
+            await _cacheService.RemoveAsync("categories_index");
+            await _cacheService.RemoveAsync($"category_details_{category.Slug}");
+
+            return Json(new { success = true, isActive = category.IsActive });
         }
 
-        private async Task<int> GetNextDisplayOrderAsync()
+        private async Task<int> GetPostCountForCategoryAsync(int categoryId)
         {
-            var categories = await _categoryRepository.GetAllAsync();
-            return categories.Any() ? categories.Max(c => c.DisplayOrder) + 1 : 1;
+            var category = await _categoryRepository.GetByIdAsync(categoryId);
+            if (category == null) return 0;
+
+            var posts = await _blogPostRepository.GetAllAsync();
+            return posts.Count(p => p.Tags.Contains(category.Name) && p.IsPublished);
+        }
+
+        private CategoryDto MapToDto(Category category)
+        {
+            return new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Slug = category.Slug,
+                Description = category.Description,
+                Color = category.Color,
+                Icon = category.Icon,
+                ParentCategoryId = category.ParentCategoryId,
+                IsActive = category.IsActive,
+                DisplayOrder = category.DisplayOrder,
+                PostCount = category.PostCount
+            };
         }
 
         private string GenerateSlug(string name)
@@ -181,15 +329,4 @@ namespace BloggingAgent.Controllers
         }
     }
 
-    public class CategoryDetailViewModel
-    {
-        public Category Category { get; set; }
-        public List<BlogPost> Posts { get; set; } = new List<BlogPost>();
-    }
-
-    public class CategoryOrder
-    {
-        public int Id { get; set; }
-        public int Order { get; set; }
-    }
 }

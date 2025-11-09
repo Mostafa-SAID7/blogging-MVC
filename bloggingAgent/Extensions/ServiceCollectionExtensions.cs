@@ -1,67 +1,49 @@
 using BloggingAgent.Agents;
-using BloggingAgent.Configuration;
-using BloggingAgent.Data;
 using BloggingAgent.Data.Repositories;
-using BloggingAgent.Middleware;
 using BloggingAgent.Services.Cache;
 using BloggingAgent.Services.Content;
 using BloggingAgent.Services.LLM;
 using BloggingAgent.Services.Memory;
 using BloggingAgent.Services.SEO;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using BloggingAgent.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BloggingAgent.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddBloggingAgentServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddBloggingAgentServices(this IServiceCollection services)
         {
-            // Database
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
-
-            // Repositories
+            // Register Repositories
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IBlogPostRepository, BlogPostRepository>();
 
-            // Services
+            // Register Services
             services.AddScoped<ILlmConnector, LlmConnector>();
             services.AddScoped<IMemoryService, MemoryService>();
             services.AddScoped<ISeoService, SeoService>();
             services.AddScoped<IContentFormatter, ContentFormatter>();
             services.AddScoped<ICacheService, MemoryCacheService>();
+            services.AddScoped<MemoryAnalyzer>();
+            services.AddScoped<SeoAnalyzer>();
 
-            // Agents
-            services.AddScoped<IBloggingAgent, BloggingAgent.Agents.BloggingAgent>();
-
-            // Configuration
-            services.Configure<LlmSettings>(configuration.GetSection("LlmSettings"));
-            services.Configure<OpenAISettings>(configuration.GetSection("OpenAISettings"));
-            services.Configure<SeoSettings>(configuration.GetSection("SeoSettings"));
-            services.Configure<CacheSettings>(configuration.GetSection("CacheSettings"));
-            services.Configure<Models.Domain.AgentSettings>(configuration.GetSection("AgentSettings"));
-
-            // LLM Providers
-            services.AddHttpClient<OpenAIProvider>();
-            services.AddHttpClient<OllamaProvider>();
+            // Register LLM Providers
             services.AddScoped<ILlmProvider, OpenAIProvider>();
             services.AddScoped<ILlmProvider, OllamaProvider>();
 
-            // Memory Cache
-            services.AddMemoryCache();
+            // Register Agents
+            services.AddScoped<IBloggingAgent, BloggingAgent>();
+
+            // Register Utilities
+            services.AddScoped<TextAnalyzer>();
+            services.AddScoped<SlugGenerator>();
+            services.AddScoped<WordCounter>();
+
+            // Register Middleware
+            services.AddScoped<Middleware.ErrorHandlingMiddleware>();
+            services.AddScoped<Middleware.RequestLoggingMiddleware>();
 
             return services;
-        }
-
-        public static IApplicationBuilder UseBloggingAgentMiddleware(this IApplicationBuilder app)
-        {
-            app.UseMiddleware<ErrorHandlingMiddleware>();
-            app.UseMiddleware<RequestLoggingMiddleware>();
-
-            return app;
         }
     }
 }

@@ -1,0 +1,1 @@
+                return RedirectToAction("Details", new { slug = publishedPost.Slug });
