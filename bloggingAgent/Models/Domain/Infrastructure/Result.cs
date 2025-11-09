@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Infrastructure
 {
     public class Result<T>
     {

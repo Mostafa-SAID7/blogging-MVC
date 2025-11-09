@@ -1,6 +1,6 @@
 using System;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Infrastructure
 {
     public abstract class DomainException : Exception
     {

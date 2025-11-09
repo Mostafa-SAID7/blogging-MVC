@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Infrastructure
 {
     public class ValidationResult
     {

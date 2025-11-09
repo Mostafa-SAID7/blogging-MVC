@@ -4,7 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Infrastructure
 {
     public interface IRepository<TAggregate> where TAggregate : IAggregateRoot
     {

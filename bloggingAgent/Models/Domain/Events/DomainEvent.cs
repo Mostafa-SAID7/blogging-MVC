@@ -1,6 +1,6 @@
 using System;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Events
 {
     public interface IDomainEvent
     {

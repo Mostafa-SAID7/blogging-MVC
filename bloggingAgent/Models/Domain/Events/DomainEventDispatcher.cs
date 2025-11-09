@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Events
 {
     public interface IDomainEventDispatcher
     {

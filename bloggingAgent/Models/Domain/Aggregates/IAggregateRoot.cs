@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Aggregates
 {
     public interface IAggregateRoot
     {

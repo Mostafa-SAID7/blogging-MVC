@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Services
 {
     // Domain Service interfaces
     public interface IBlogPostDomainService

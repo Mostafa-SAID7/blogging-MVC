@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Responses
 {
     public class ErrorResponse
     {

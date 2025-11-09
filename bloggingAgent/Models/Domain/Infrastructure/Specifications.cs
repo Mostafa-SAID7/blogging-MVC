@@ -1,7 +1,7 @@
 using System;
 using System.Linq.Expressions;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Infrastructure
 {
     // BlogPost Specifications
     public class BlogPostByIdSpec : Specification<BlogPost>

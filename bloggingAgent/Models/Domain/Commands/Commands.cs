@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using MediatR;
 
-namespace BloggingAgent.Models.Domain
+namespace BloggingAgent.Models.Domain.Commands
 {
     // Command base classes
     public abstract class Command : IRequest<Result>
