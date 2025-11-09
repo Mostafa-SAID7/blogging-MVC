@@ -1,9 +1,10 @@
 using BloggingAgent.Models.Domain;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BloggingAgent.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -11,10 +12,13 @@ namespace BloggingAgent.Data
         }
 
         public DbSet<BlogPost> BlogPosts { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<Category> Categories { get; set; }
         public DbSet<AgentMemory> AgentMemories { get; set; }
         public DbSet<SeoMetadata> SeoMetadata { get; set; }
         public DbSet<ContentAnalytics> ContentAnalytics { get; set; }
         public DbSet<AgentSettings> AgentSettings { get; set; }
+        public DbSet<UserLogin> UserLogins { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,7 +44,7 @@ namespace BloggingAgent.Data
                           v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
                       );
 
-                // Configure relationships
+                // Relationships
                 entity.HasOne(e => e.SeoMetadata)
                       .WithOne()
                       .HasForeignKey<BlogPost>(e => e.Id)
@@ -50,6 +54,56 @@ namespace BloggingAgent.Data
                       .WithOne()
                       .HasForeignKey<BlogPost>(e => e.Id)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<ApplicationUser>()
+                      .WithMany(u => u.Posts)
+                      .HasForeignKey(e => e.AuthorId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Comment configuration
+            modelBuilder.Entity<Comment>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Content).IsRequired();
+                entity.Property(e => e.IpAddress).HasMaxLength(45);
+                entity.Property(e => e.UserAgent).HasMaxLength(500);
+                entity.HasIndex(e => e.CreatedAt);
+                entity.HasIndex(e => new { e.BlogPostId, e.IsApproved, e.IsSpam });
+
+                // Self-referencing relationship for nested comments
+                entity.HasOne(e => e.ParentComment)
+                      .WithMany()
+                      .HasForeignKey(e => e.ParentCommentId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Relationships
+                entity.HasOne(e => e.BlogPost)
+                      .WithMany()
+                      .HasForeignKey(e => e.BlogPostId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<ApplicationUser>()
+                      .WithMany(u => u.Comments)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Category configuration
+            modelBuilder.Entity<Category>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Slug).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.HasIndex(e => e.Slug).IsUnique();
+                entity.HasIndex(e => e.IsActive);
+
+                // Self-referencing relationship for hierarchical categories
+                entity.HasOne(e => e.ParentCategory)
+                      .WithMany(e => e.SubCategories)
+                      .HasForeignKey(e => e.ParentCategoryId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
             // AgentMemory configuration
@@ -123,6 +177,21 @@ namespace BloggingAgent.Data
                           v => System.Text.Json.JsonSerializer.Serialize(v, new System.Text.Json.JsonSerializerOptions()),
                           v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(v, new System.Text.Json.JsonSerializerOptions()) ?? new Dictionary<string, object>()
                       );
+            });
+
+            // UserLogin configuration
+            modelBuilder.Entity<UserLogin>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Provider).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.ProviderKey).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.ProviderDisplayName).HasMaxLength(200);
+                entity.HasIndex(e => new { e.UserId, e.Provider });
+
+                entity.HasOne(e => e.User)
+                      .WithMany(u => u.ExternalLogins)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }
