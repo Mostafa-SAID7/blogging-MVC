@@ -1,0 +1,163 @@
+@model BlogIndexViewModel
+@{
+    ViewData["Title"] = "Blog Posts";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Blog Posts</h1>
+                <a href="@Url.Action("Generate")" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Generate New Post
+                </a>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" name="searchQuery" value="@Model.SearchQuery"
+                                   class="form-control" placeholder="Search posts...">
+                        </div>
+                        <div class="col-md-4">
+                            <select name="tag" class="form-select">
+                                <option value="">All Tags</option>
+                                @foreach (var tag in Model.TagCounts.Keys)
+                                {
+                                    <option value="@tag" selected="@(Model.SelectedTags.Contains(tag) ? "selected" : null)">
+                                        @tag (@Model.TagCounts[tag])
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Posts List -->
+            @if (Model.Posts.Any())
+            {
+                foreach (var post in Model.Posts)
+                {
+                    <div class="card mb-3 post-card">
+                        <div class="card-body">
+                            <h2 class="card-title">
+                                <a href="@Url.Action("Details", new { slug = post.Slug })" class="text-decoration-none">
+                                    @post.Title
+                                </a>
+                            </h2>
+                            <p class="card-text text-muted">@post.Excerpt</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">
+                                        By @post.Author on @post.CreatedAt.ToReadableDate()
+                                    </small>
+                                    @if (post.Tags.Any())
+                                    {
+                                        <div class="mt-2">
+                                            @foreach (var tag in post.Tags)
+                                            {
+                                                <span class="badge bg-secondary me-1">@tag</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <div>
+                                    @if (!post.IsPublished)
+                                    {
+                                        <span class="badge bg-warning">Draft</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <nav aria-label="Blog pagination">
+                        <ul class="pagination justify-content-center">
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = i, searchQuery = Model.SearchQuery, tag = Model.SelectedTags.FirstOrDefault() })">@i</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
+                    <h3>No posts found</h3>
+                    <p class="text-muted">Try adjusting your search or create your first post.</p>
+                    <a href="@Url.Action("Generate")" class="btn btn-primary">Generate First Post</a>
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Popular Tags -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Popular Tags</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var tag in Model.TagCounts.OrderByDescending(t => t.Value).Take(10))
+                    {
+                        <a href="@Url.Action("Index", new { tag = tag.Key })"
+                           class="badge bg-primary me-2 mb-2 text-decoration-none">
+                            @tag.Key (@tag.Value)
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h4 mb-0">@Model.Posts.Count</div>
+                            <small class="text-muted">Posts</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 mb-0">@Model.TagCounts.Count</div>
+                            <small class="text-muted">Tags</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Add any client-side functionality here
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.querySelector('input[name="searchQuery"]');
+            let searchTimeout;
+
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.form.submit();
+                }, 500);
+            });
+        });
+    </script>
+}

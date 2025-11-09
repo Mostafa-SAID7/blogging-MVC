@@ -1,0 +1,258 @@
+@model AnalyticsViewModel
+@{
+    ViewData["Title"] = "Blog Analytics";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Blog Analytics</h1>
+                <div>
+                    <a href="@Url.Action("ExportData", new { format = "json" })" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-download"></i> Export JSON
+                    </a>
+                    <a href="@Url.Action("ExportData", new { format = "csv" })" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Export CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 text-primary">@Model.TotalViews.ToString("N0")</div>
+                    <div class="text-muted">Total Views</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 text-success">@Model.TotalPosts</div>
+                    <div class="text-muted">Published Posts</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 text-info">@Model.AverageReadTime.ToString("F1")m</div>
+                    <div class="text-muted">Avg. Read Time</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 text-warning">@Model.TopTags.Count</div>
+                    <div class="text-muted">Unique Tags</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Post Performance -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Post Performance</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.PostAnalytics.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Post Title</th>
+                                        <th>Views</th>
+                                        <th>Unique Views</th>
+                                        <th>Read Time</th>
+                                        <th>Bounce Rate</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var analytics in Model.PostAnalytics.OrderByDescending(a => a.Views).Take(10))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@(await GetPostTitleAsync(analytics.BlogPostId))</strong>
+                                            </td>
+                                            <td>@analytics.Views</td>
+                                            <td>@analytics.UniqueViews</td>
+                                            <td>@analytics.AverageReadTime.ToString("F1")m</td>
+                                            <td>@(analytics.BounceRate.ToString("P1"))</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary"
+                                                        onclick="showPostDetails(@analytics.BlogPostId)">
+                                                    Details
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No analytics data available yet.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Top Tags -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Top Tags</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.TopTags.Any())
+                    {
+                        foreach (var tag in Model.TopTags)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>@tag.Key</span>
+                                <span class="badge bg-primary">@tag.Value</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No tags found</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Traffic Sources -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Traffic Sources</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.TrafficSources.Any())
+                    {
+                        foreach (var source in Model.TrafficSources)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>@source.Key</span>
+                                <span class="badge bg-info">@source.Value</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No traffic data available</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Performance Overview</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var metric in Model.PerformanceMetrics)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>@metric.Key</span>
+                            <span class="fw-bold">@metric.Value.ToString("F1")</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Post Details Modal -->
+<div class="modal fade" id="postDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Post Analytics Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="postDetailsContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{
+    async Task<string> GetPostTitleAsync(int postId)
+    {
+        // This is a simplified version - in real implementation you'd inject the repository
+        // For now, we'll just return a placeholder
+        return $"Post {postId}";
+    }
+}
+
+@section Scripts {
+    <script>
+        function showPostDetails(postId) {
+            const modal = new bootstrap.Modal(document.getElementById('postDetailsModal'));
+            const content = document.getElementById('postDetailsContent');
+
+            content.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+            // Fetch post details
+            fetch(`/analytics/postdetails/${postId}`)
+                .then(response => response.json())
+                .then(data => {
+                    content.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Views</h6>
+                                <div class="h4">${data.views || 0}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Unique Views</h6>
+                                <div class="h4">${data.uniqueViews || 0}</div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6>Shares</h6>
+                                <div class="h5">${data.shares || 0}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Comments</h6>
+                                <div class="h5">${data.comments || 0}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Avg Read Time</h6>
+                                <div class="h5">${(data.averageReadTime || 0).toFixed(1)}m</div>
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    content.innerHTML = '<div class="alert alert-danger">Error loading post details.</div>';
+                    console.error('Error:', error);
+                });
+
+            modal.show();
+        }
+    </script>
+}

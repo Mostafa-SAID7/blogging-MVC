@@ -1,0 +1,162 @@
+@model GeneratePostRequest
+@{
+    ViewData["Title"] = "Generate Blog Post";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Generate New Blog Post</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="generateForm">
+                        <div class="mb-3">
+                            <label for="Topic" class="form-label">Topic *</label>
+                            <input type="text" class="form-control" id="Topic" name="Topic"
+                                   value="@Model?.Topic" placeholder="Enter your blog post topic" required>
+                            <div class="form-text">What do you want to write about?</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Keywords" class="form-label">Keywords</label>
+                            <input type="text" class="form-control" id="Keywords" name="Keywords"
+                                   value="@Model?.Keywords" placeholder="keyword1, keyword2, keyword3">
+                            <div class="form-text">Comma-separated keywords to include in the content</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="TargetWordCount" class="form-label">Target Word Count</label>
+                                <select class="form-select" id="TargetWordCount" name="TargetWordCount">
+                                    <option value="500" selected="@(Model?.TargetWordCount == 500)">500 words</option>
+                                    <option value="750" selected="@(Model?.TargetWordCount == 750)">750 words</option>
+                                    <option value="1000" selected="@(Model?.TargetWordCount == 1000)">1000 words</option>
+                                    <option value="1500" selected="@(Model?.TargetWordCount == 1500)">1500 words</option>
+                                    <option value="2000" selected="@(Model?.TargetWordCount == 2000)">2000 words</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="Tone" class="form-label">Tone</label>
+                                <select class="form-select" id="Tone" name="Tone">
+                                    <option value="professional" selected="@(Model?.Tone == "professional")">Professional</option>
+                                    <option value="casual" selected="@(Model?.Tone == "casual")">Casual</option>
+                                    <option value="friendly" selected="@(Model?.Tone == "friendly")">Friendly</option>
+                                    <option value="formal" selected="@(Model?.Tone == "formal")">Formal</option>
+                                    <option value="conversational" selected="@(Model?.Tone == "conversational")">Conversational</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="TargetAudience" class="form-label">Target Audience</label>
+                            <select class="form-select" id="TargetAudience" name="TargetAudience">
+                                <option value="general" selected="@(Model?.TargetAudience == "general")">General Audience</option>
+                                <option value="beginners" selected="@(Model?.TargetAudience == "beginners")">Beginners</option>
+                                <option value="intermediate" selected="@(Model?.TargetAudience == "intermediate")">Intermediate</option>
+                                <option value="experts" selected="@(Model?.TargetAudience == "experts")">Experts</option>
+                                <option value="business" selected="@(Model?.TargetAudience == "business")">Business Professionals</option>
+                                <option value="students" selected="@(Model?.TargetAudience == "students")">Students</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Tags" class="form-label">Tags</label>
+                            <input type="text" class="form-control" id="Tags" name="Tags"
+                                   value="@string.Join(", ", Model?.Tags ?? new List<string>())"
+                                   placeholder="tag1, tag2, tag3">
+                            <div class="form-text">Comma-separated tags for categorization</div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="IncludeImages" name="IncludeImages"
+                                   checked="@Model?.IncludeImages">
+                            <label class="form-check-label" for="IncludeImages">
+                                Include image placeholders in content
+                            </label>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" id="generateBtn">
+                                <i class="fas fa-magic"></i> Generate Post
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Blog
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Generation Progress -->
+            <div class="card mt-4 d-none" id="progressCard">
+                <div class="card-body">
+                    <h5>Generating your blog post...</h5>
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                             role="progressbar" style="width: 0%" id="progressBar"></div>
+                    </div>
+                    <div id="progressText">Initializing AI content generation...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('generateForm');
+            const generateBtn = document.getElementById('generateBtn');
+            const progressCard = document.getElementById('progressCard');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            form.addEventListener('submit', function(e) {
+                // Show progress
+                progressCard.classList.remove('d-none');
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+                // Simulate progress (in real implementation, this would be server-sent events)
+                let progress = 0;
+                const progressSteps = [
+                    'Analyzing topic...',
+                    'Generating content structure...',
+                    'Writing introduction...',
+                    'Creating main content...',
+                    'Adding conclusion...',
+                    'Optimizing for SEO...',
+                    'Finalizing post...'
+                ];
+
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 100) progress = 100;
+
+                    progressBar.style.width = progress + '%';
+
+                    const stepIndex = Math.floor((progress / 100) * progressSteps.length);
+                    if (stepIndex < progressSteps.length) {
+                        progressText.textContent = progressSteps[stepIndex];
+                    }
+
+                    if (progress >= 100) {
+                        clearInterval(progressInterval);
+                        progressText.textContent = 'Post generated successfully!';
+                    }
+                }, 500);
+            });
+
+            // Auto-save draft functionality (optional enhancement)
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    // Could implement auto-save to localStorage here
+                    console.log('Form changed - could auto-save draft');
+                });
+            });
+        });
+    </script>
+}

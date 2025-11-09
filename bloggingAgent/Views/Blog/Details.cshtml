@@ -1,0 +1,33 @@
+        <!-- Comments Section -->
+        @if (Model.Post.IsPublished)
+        {
+            <div class="card mt-5" id="comments-section">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>
+                        Comments (@(await GetCommentCountAsync(Model.Post.Id)))
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Comment Form -->
+                    <div class="mb-4">
+                        <h5>Leave a Comment</h5>
+                        <form method="post" action="@Url.Action("Add", "Comment")">
+                            <input type="hidden" name="postId" value="@Model.Post.Id" />
+                            <div class="mb-3">
+                                <textarea class="form-control" name="content" rows="4"
+                                          placeholder="Share your thoughts..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Post Comment
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Comments List -->
+                    <div id="comments-list">
+                        @await Html.PartialAsync("_CommentsList", Model.Post.Id)
+                    </div>
+                </div>
+            </div>
+        }
