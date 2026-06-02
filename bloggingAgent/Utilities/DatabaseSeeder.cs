@@ -1,5 +1,6 @@
 using BloggingAgent.Data;
 using BloggingAgent.Models.Domain;
+using BloggingAgent.Models.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
@@ -75,7 +76,6 @@ namespace BloggingAgent.Utilities
             {
                 _context.AgentSettings.Add(new AgentSettings
                 {
-                    Id = 1,
                     DefaultAuthor = "AI Assistant",
                     MaxPostLength = 5000,
                     DefaultTags = new List<string> { "blog", "ai-generated" },
@@ -130,7 +130,7 @@ Happy blogging!",
                     Author = "AI Assistant",
                     CreatedAt = DateTime.UtcNow.AddDays(-7),
                     UpdatedAt = DateTime.UtcNow.AddDays(-7),
-                    IsPublished = true,
+                    Status = PostStatus.Published,
                     Tags = new List<string> { "welcome", "ai", "blogging" }
                 },
                 new BlogPost
@@ -166,7 +166,7 @@ The future of AI content generation looks promising, with continuous improvement
                     Author = "AI Assistant",
                     CreatedAt = DateTime.UtcNow.AddDays(-5),
                     UpdatedAt = DateTime.UtcNow.AddDays(-5),
-                    IsPublished = true,
+                    Status = PostStatus.Published,
                     Tags = new List<string> { "ai", "content", "technology" }
                 }
             };

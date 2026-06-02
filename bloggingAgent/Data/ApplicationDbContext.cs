@@ -48,12 +48,12 @@ namespace BloggingAgent.Data
                 entity.HasOne(e => e.SeoMetadata)
                       .WithOne()
                       .HasForeignKey<BlogPost>(e => e.Id)
-                      .OnDelete(DeleteBehavior.Cascade);
+                      .OnDelete(DeleteBehavior.NoAction);
 
                 entity.HasOne(e => e.Analytics)
                       .WithOne()
                       .HasForeignKey<BlogPost>(e => e.Id)
-                      .OnDelete(DeleteBehavior.Cascade);
+                      .OnDelete(DeleteBehavior.NoAction);
 
                 entity.HasOne<ApplicationUser>()
                       .WithMany(u => u.Posts)
@@ -75,7 +75,7 @@ namespace BloggingAgent.Data
                 entity.HasOne(e => e.ParentComment)
                       .WithMany()
                       .HasForeignKey(e => e.ParentCommentId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                      .OnDelete(DeleteBehavior.NoAction);
 
                 // Relationships
                 entity.HasOne(e => e.BlogPost)
@@ -86,7 +86,7 @@ namespace BloggingAgent.Data
                 entity.HasOne<ApplicationUser>()
                       .WithMany(u => u.Comments)
                       .HasForeignKey(e => e.UserId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                      .OnDelete(DeleteBehavior.NoAction);
             });
 
             // Category configuration
@@ -100,10 +100,11 @@ namespace BloggingAgent.Data
                 entity.HasIndex(e => e.IsActive);
 
                 // Self-referencing relationship for hierarchical categories
+                // Using NoAction to prevent circular cascade paths in SQL Server
                 entity.HasOne(e => e.ParentCategory)
                       .WithMany(e => e.SubCategories)
                       .HasForeignKey(e => e.ParentCategoryId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                      .OnDelete(DeleteBehavior.NoAction);
             });
 
             // AgentMemory configuration

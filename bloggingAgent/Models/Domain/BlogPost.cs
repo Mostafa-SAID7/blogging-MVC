@@ -47,8 +47,8 @@ namespace BloggingAgent.Models.Domain
 
         // Navigation properties
         public virtual ApplicationUser AuthorUser { get; set; }
-        public string AuthorUserId { get; set; }
-        public string AuthorId { get; set; }
+        public string? AuthorUserId { get; set; }
+        public string? AuthorId { get; set; }
 
         public virtual SeoMetadata SeoMetadata { get; set; }
         public virtual ContentAnalytics Analytics { get; set; }

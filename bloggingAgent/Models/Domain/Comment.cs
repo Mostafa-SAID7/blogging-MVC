@@ -23,7 +23,7 @@ namespace BloggingAgent.Models.Domain
 
         public string AuthorId { get; set; }
         public virtual ApplicationUser Author { get; set; }
-        public string UserId { get; set; }
+        public string? UserId { get; set; }
 
         public int BlogPostId { get; set; }
         public virtual BlogPost BlogPost { get; set; }
