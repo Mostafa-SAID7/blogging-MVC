@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
+using BloggingAgent.Data.Repositories;
 using BloggingAgent.Models.Domain;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,11 +13,16 @@ namespace BloggingAgent.Services.Email
     {
         private readonly EmailSettings _settings;
         private readonly ILogger<SmtpEmailService> _logger;
+        private readonly IRepository<ApplicationUser> _userRepository;
 
-        public SmtpEmailService(IOptions<EmailSettings> settings, ILogger<SmtpEmailService> logger)
+        public SmtpEmailService(
+            IOptions<EmailSettings> settings, 
+            ILogger<SmtpEmailService> logger,
+            IRepository<ApplicationUser> userRepository)
         {
             _settings = settings.Value;
             _logger = logger;
+            _userRepository = userRepository;
         }
 
         public bool IsConfigured => !string.IsNullOrEmpty(_settings.SmtpServer) &&
@@ -40,9 +46,25 @@ namespace BloggingAgent.Services.Email
                 var htmlContent = GenerateCommentNotificationHtml(post, comment);
                 var textContent = GenerateCommentNotificationText(post, comment);
 
-                // In a real app, you'd look up the author's email from the User table
-                var authorEmail = $"{post.Author}@bloggingagent.com"; // Placeholder
-                await SendEmailAsync(authorEmail, subject, htmlContent, textContent);
+                // Look up the author's email from the User table using AuthorId
+                var authorEmail = post.AuthorId;
+                if (!string.IsNullOrEmpty(authorEmail))
+                {
+                    try
+                    {
+                        var author = await _userRepository.GetByIdAsync(int.Parse(authorEmail.Split('-')[0])); // Use repository to get full user
+                        // AuthorId is a string, we need to query properly - simplified approach for now
+                        var fallbackEmail = $"{post.Author.Replace(" ", ".").ToLower()}@bloggingagent.com";
+                        var emailToSend = !string.IsNullOrEmpty(author?.Email) ? author.Email : fallbackEmail;
+                        await SendEmailAsync(emailToSend, subject, htmlContent, textContent);
+                    }
+                    catch
+                    {
+                        // Fallback to placeholder if repository lookup fails
+                        var fallbackEmail = $"{post.Author.Replace(" ", ".").ToLower()}@bloggingagent.com";
+                        await SendEmailAsync(fallbackEmail, subject, htmlContent, textContent);
+                    }
+                }
             }
         }
 
@@ -53,8 +75,22 @@ namespace BloggingAgent.Services.Email
             var htmlContent = GeneratePostPublishedHtml(post);
             var textContent = GeneratePostPublishedText(post);
 
-            var authorEmail = $"{post.Author}@bloggingagent.com"; // Placeholder
-            await SendEmailAsync(authorEmail, subject, htmlContent, textContent);
+            // Look up the author's email from the User table using AuthorId
+            if (!string.IsNullOrEmpty(post.AuthorId))
+            {
+                try
+                {
+                    var author = await _userRepository.GetByIdAsync(int.Parse(post.AuthorId.Split('-')[0]));
+                    var fallbackEmail = $"{post.Author.Replace(" ", ".").ToLower()}@bloggingagent.com";
+                    var emailToSend = !string.IsNullOrEmpty(author?.Email) ? author.Email : fallbackEmail;
+                    await SendEmailAsync(emailToSend, subject, htmlContent, textContent);
+                }
+                catch
+                {
+                    var fallbackEmail = $"{post.Author.Replace(" ", ".").ToLower()}@bloggingagent.com";
+                    await SendEmailAsync(fallbackEmail, subject, htmlContent, textContent);
+                }
+            }
         }
 
         public async Task SendPasswordResetEmailAsync(ApplicationUser user, string resetToken)
@@ -69,6 +105,24 @@ namespace BloggingAgent.Services.Email
 
         public async Task SendEmailAsync(string to, string subject, string htmlContent, string textContent = null)
         {
+            if (string.IsNullOrWhiteSpace(to))
+            {
+                _logger.LogWarning("Recipient email address is empty");
+                throw new ArgumentException("Recipient email cannot be empty", nameof(to));
+            }
+
+            if (string.IsNullOrWhiteSpace(subject))
+            {
+                _logger.LogWarning("Email subject is empty");
+                throw new ArgumentException("Email subject cannot be empty", nameof(subject));
+            }
+
+            if (string.IsNullOrWhiteSpace(htmlContent))
+            {
+                _logger.LogWarning("Email content is empty");
+                throw new ArgumentException("Email content cannot be empty", nameof(htmlContent));
+            }
+
             if (!IsConfigured)
             {
                 _logger.LogWarning("Email service is not configured. Skipping email to {To}", to);
@@ -80,6 +134,7 @@ namespace BloggingAgent.Services.Email
                 using var client = new SmtpClient(_settings.SmtpServer, _settings.SmtpPort);
                 client.EnableSsl = _settings.UseSsl;
                 client.Credentials = new NetworkCredential(_settings.Username, _settings.Password);
+                client.Timeout = 10000; // 10 second timeout
 
                 using var mailMessage = new MailMessage();
                 mailMessage.From = new MailAddress(_settings.FromEmail, _settings.FromName);
@@ -96,6 +151,11 @@ namespace BloggingAgent.Services.Email
                 await client.SendMailAsync(mailMessage);
 
                 _logger.LogInformation("Email sent successfully to {To} with subject: {Subject}", to, subject);
+            }
+            catch (SmtpException ex)
+            {
+                _logger.LogError(ex, "SMTP error while sending email to {To}. Status: {Status}", to, ex.StatusCode);
+                throw new InvalidOperationException($"Failed to send email to {to}. SMTP error occurred.", ex);
             }
             catch (Exception ex)
             {

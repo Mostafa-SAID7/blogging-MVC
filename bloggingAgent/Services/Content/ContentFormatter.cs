@@ -29,42 +29,57 @@ namespace BloggingAgent.Services.Content
         public Task<string> FormatAsHtmlAsync(string markdownContent)
         {
             if (string.IsNullOrEmpty(markdownContent))
+            {
+                _logger.LogDebug("Empty markdown content provided");
                 return Task.FromResult(string.Empty);
+            }
 
             try
             {
                 var html = Markdown.ToHtml(markdownContent, _markdownPipeline);
+                _logger.LogInformation("Successfully converted markdown to HTML ({Length} chars)", html.Length);
                 return Task.FromResult(OptimizeHtml(html));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error converting markdown to HTML");
-                return Task.FromResult(markdownContent);
+                throw new InvalidOperationException("Failed to convert markdown to HTML", ex);
             }
         }
 
         public Task<string> FormatAsMarkdownAsync(string htmlContent)
         {
             // Simple HTML to Markdown conversion
-            // In a real implementation, you'd use a proper HTML to Markdown converter
             if (string.IsNullOrEmpty(htmlContent))
+            {
+                _logger.LogDebug("Empty HTML content provided");
                 return Task.FromResult(string.Empty);
+            }
 
-            var markdown = htmlContent
-                .Replace("<strong>", "**")
-                .Replace("</strong>", "**")
-                .Replace("<em>", "*")
-                .Replace("</em>", "*")
-                .Replace("<p>", "")
-                .Replace("</p>", "\n\n")
-                .Replace("<br>", "\n")
-                .Replace("<br/>", "\n")
-                .Replace("<br />", "\n");
+            try
+            {
+                var markdown = htmlContent
+                    .Replace("<strong>", "**")
+                    .Replace("</strong>", "**")
+                    .Replace("<em>", "*")
+                    .Replace("</em>", "*")
+                    .Replace("<p>", "")
+                    .Replace("</p>", "\n\n")
+                    .Replace("<br>", "\n")
+                    .Replace("<br/>", "\n")
+                    .Replace("<br />", "\n");
 
-            // Remove other HTML tags
-            markdown = Regex.Replace(markdown, @"<[^>]+>", "");
+                // Remove other HTML tags
+                markdown = Regex.Replace(markdown, @"<[^>]+>", "");
 
-            return Task.FromResult(markdown.Trim());
+                _logger.LogInformation("Successfully converted HTML to Markdown");
+                return Task.FromResult(markdown.Trim());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting HTML to Markdown");
+                throw new InvalidOperationException("Failed to convert HTML to Markdown", ex);
+            }
         }
 
         public Task<string> ExtractExcerptAsync(string content, int maxLength = 150)

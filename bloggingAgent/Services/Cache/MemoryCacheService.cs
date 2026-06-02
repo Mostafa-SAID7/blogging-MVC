@@ -71,12 +71,23 @@ namespace BloggingAgent.Services.Cache
 
         public async Task ClearAsync()
         {
-            // Note: IMemoryCache doesn't have a clear method, so we need to be creative
-            // In a real implementation, you might use a distributed cache or maintain a list of keys
-            _logger.LogWarning("ClearAsync not fully implemented for MemoryCache - consider using distributed cache");
-
-            // For now, we'll just log that this operation is not supported
-            // In production, you'd want to use IDistributedCache or maintain your own key registry
+            try
+            {
+                // For IMemoryCache, we maintain a list of all keys
+                var keysToRemove = new List<string>(_expirationTimes.Keys);
+                foreach (var key in keysToRemove)
+                {
+                    _cache.Remove(key);
+                    _expirationTimes.TryRemove(key, out _);
+                }
+                
+                _logger.LogInformation("Cache cleared successfully. Removed {Count} entries", keysToRemove.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error clearing cache");
+                throw;
+            }
         }
 
         public async Task<TimeSpan?> GetTimeToLiveAsync(string key)

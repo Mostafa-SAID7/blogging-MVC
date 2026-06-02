@@ -22,6 +22,12 @@ namespace BloggingAgent.Services.SEO
 
         public async Task<SeoAnalysisResult> AnalyzeContentAsync(string content, string title = null)
         {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                _logger.LogWarning("Content is empty for SEO analysis");
+                throw new ArgumentException("Content cannot be empty", nameof(content));
+            }
+
             var result = new SeoAnalysisResult();
             var checks = new Dictionary<string, bool>();
 
@@ -47,24 +53,85 @@ namespace BloggingAgent.Services.SEO
 
             result.Suggestions = suggestions;
 
-            // Keyword analysis
-            var keywords = await SuggestKeywordsAsync(content, 10);
-            result.KeywordOccurrences = AnalyzeKeywordDensity(content, keywords);
+            try
+            {
+                // Keyword analysis
+                var keywords = await SuggestKeywordsAsync(content, 10);
+                result.KeywordOccurrences = AnalyzeKeywordDensity(content, keywords);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error analyzing keywords during SEO analysis");
+                result.KeywordOccurrences = new Dictionary<string, int>();
+            }
 
+            _logger.LogInformation("SEO analysis completed with score: {Score}", result.Score);
             return result;
         }
 
         public async Task<string> GenerateMetaDescriptionAsync(string content)
         {
-            var prompt = $"Generate a compelling meta description (150-160 characters) for this content:\n\n{content.Substring(0, Math.Min(500, content.Length))}";
-            return await _llmConnector.GenerateContentAsync(prompt, 200);
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                _logger.LogWarning("Content is empty for meta description generation");
+                throw new ArgumentException("Content cannot be empty", nameof(content));
+            }
+
+            try
+            {
+                var contentSample = content.Substring(0, Math.Min(500, content.Length));
+                var prompt = $"Generate a compelling meta description (150-160 characters) for this content:\n\n{contentSample}";
+                var result = await _llmConnector.GenerateContentAsync(prompt, 200);
+                
+                // Ensure description is within limit
+                if (result.Length > 160)
+                {
+                    result = result.Substring(0, 157) + "...";
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating meta description");
+                throw;
+            }
         }
 
         public async Task<string[]> SuggestKeywordsAsync(string content, int count = 5)
         {
-            var prompt = $"Extract {count} relevant keywords from this content:\n\n{content.Substring(0, Math.Min(1000, content.Length))}\n\nReturn only the keywords separated by commas.";
-            var response = await _llmConnector.GenerateContentAsync(prompt, 100);
-            return response.Split(',').Select(k => k.Trim()).Take(count).ToArray();
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                _logger.LogWarning("Content is empty for keyword suggestion");
+                throw new ArgumentException("Content cannot be empty", nameof(content));
+            }
+
+            if (count <= 0)
+            {
+                _logger.LogWarning("Keyword count must be greater than 0");
+                throw new ArgumentException("Count must be greater than 0", nameof(count));
+            }
+
+            try
+            {
+                var contentSample = content.Substring(0, Math.Min(1000, content.Length));
+                var prompt = $"Extract {count} relevant keywords from this content:\n\n{contentSample}\n\nReturn only the keywords separated by commas.";
+                var response = await _llmConnector.GenerateContentAsync(prompt, 100);
+                
+                var keywords = response
+                    .Split(',')
+                    .Select(k => k.Trim())
+                    .Where(k => !string.IsNullOrWhiteSpace(k))
+                    .Take(count)
+                    .ToArray();
+                
+                return keywords;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error suggesting keywords");
+                throw;
+            }
         }
 
         public Task<int> CalculateReadabilityScoreAsync(string content)
