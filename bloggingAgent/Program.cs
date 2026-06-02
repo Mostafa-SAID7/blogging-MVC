@@ -48,7 +48,7 @@ builder.Services.AddHealthCheckConfiguration();
 builder.AddLoggingConfiguration();
 
 // Register Database Seeder
-builder.Services.AddScoped<BloggingAgent.Utilities.DatabaseSeeder>();
+builder.Services.AddScoped<BloggingAgent.Data.DatabaseSeeder>();
 
 // Register Services (moved to extension method for better organization)
 builder.Services.AddBloggingAgentServices();
@@ -92,7 +92,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        var seeder = services.GetRequiredService<BloggingAgent.Utilities.DatabaseSeeder>();
+        var seeder = services.GetRequiredService<BloggingAgent.Data.DatabaseSeeder>();
 
         logger.LogInformation("Ensuring database exists and is up to date");
         await context.Database.EnsureCreatedAsync();
