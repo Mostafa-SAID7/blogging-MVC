@@ -1,1 +1,0 @@
-- [BloggingAgent setup](bloggingagent-setup.md) — ASP.NET Core 9 blog app running on port 5000 with SQLite; key fixes and gotchas documented.
