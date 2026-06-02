@@ -39,31 +39,19 @@ namespace BloggingAgent.Data.Seeders
 
             var posts = GetSamplePosts(author.Id);
 
-            // Save each post individually to ensure proper cascading of related entities
-            int postsAdded = 0;
-            foreach (var post in posts)
+            try
             {
-                try
+                foreach (var post in posts)
                 {
-                    // Ensure ID is 0 to allow SQL Server to auto-generate
-                    post.Id = 0;
-                    if (post.SeoMetadata != null)
-                        post.SeoMetadata.Id = 0;
-                    if (post.Analytics != null)
-                        post.Analytics.Id = 0;
-
                     _context.BlogPosts.Add(post);
-                    await _context.SaveChangesAsync();
-                    postsAdded++;
-                    _logger.LogInformation("Blog post seeded: {Title}", post.Title);
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error seeding blog post: {Title}", post.Title);
-                }
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Blog post seeding completed - Added {Count} sample posts", posts.Count);
             }
-
-            _logger.LogInformation("Blog post seeding completed - Added {Count} sample posts", postsAdded);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error seeding blog posts");
+            }
         }
 
         private List<BlogPost> GetSamplePosts(string authorId)
