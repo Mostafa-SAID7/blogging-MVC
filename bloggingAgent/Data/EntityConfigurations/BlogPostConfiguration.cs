@@ -28,13 +28,13 @@ namespace BloggingAgent.Data.EntityConfigurations
             // Relationships
             entity.HasOne(e => e.SeoMetadata)
                   .WithOne()
-                  .HasForeignKey<BlogPost>(e => e.Id)
-                  .OnDelete(DeleteBehavior.NoAction);
+                  .HasForeignKey<SeoMetadata>(e => e.BlogPostId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(e => e.Analytics)
                   .WithOne()
-                  .HasForeignKey<BlogPost>(e => e.Id)
-                  .OnDelete(DeleteBehavior.NoAction);
+                  .HasForeignKey<ContentAnalytics>(e => e.BlogPostId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne<ApplicationUser>()
                   .WithMany(u => u.Posts)

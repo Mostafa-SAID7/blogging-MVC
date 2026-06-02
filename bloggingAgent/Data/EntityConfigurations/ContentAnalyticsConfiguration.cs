@@ -10,8 +10,9 @@ namespace BloggingAgent.Data.EntityConfigurations
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.BlogPostId).IsRequired();
-            entity.Property(e => e.AverageReadTime).HasColumnType("decimal(5,2)");
-            entity.Property(e => e.BounceRate).HasColumnType("decimal(5,2)");
+            // Store doubles as floats in SQL Server (double precision)
+            entity.Property(e => e.AverageReadTime).HasColumnType("float");
+            entity.Property(e => e.BounceRate).HasColumnType("float");
             entity.HasIndex(e => e.BlogPostId).IsUnique();
             entity.HasIndex(e => e.LastUpdated);
 
@@ -21,6 +22,12 @@ namespace BloggingAgent.Data.EntityConfigurations
                       v => System.Text.Json.JsonSerializer.Serialize(v, new System.Text.Json.JsonSerializerOptions()),
                       v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(v, new System.Text.Json.JsonSerializerOptions()) ?? new Dictionary<string, int>()
                   );
+
+            // Add foreign key relationship to BlogPost
+            entity.HasOne<BlogPost>()
+                  .WithOne(b => b.Analytics)
+                  .HasForeignKey<ContentAnalytics>(e => e.BlogPostId)
+                  .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

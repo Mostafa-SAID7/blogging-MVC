@@ -41,11 +41,27 @@ namespace BloggingAgent.Data.Seeders
 
             foreach (var post in posts)
             {
+                // Add blog post first
                 _context.BlogPosts.Add(post);
+                await _context.SaveChangesAsync();
+                
+                // Then add related analytics and SEO metadata with proper foreign keys
+                if (post.Analytics != null)
+                {
+                    post.Analytics.BlogPostId = post.Id;
+                    _context.ContentAnalytics.Add(post.Analytics);
+                }
+
+                if (post.SeoMetadata != null)
+                {
+                    post.SeoMetadata.BlogPostId = post.Id;
+                    _context.SeoMetadata.Add(post.SeoMetadata);
+                }
+
+                await _context.SaveChangesAsync();
                 _logger.LogInformation("Added sample post: {Title}", post.Title);
             }
 
-            await _context.SaveChangesAsync();
             _logger.LogInformation("Blog post seeding completed");
         }
 
