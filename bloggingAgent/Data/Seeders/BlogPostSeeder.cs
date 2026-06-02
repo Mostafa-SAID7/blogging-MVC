@@ -24,33 +24,36 @@ namespace BloggingAgent.Data.Seeders
         {
             _logger.LogInformation("Starting blog post seeding...");
 
-            if (_context.BlogPosts.Any())
-            {
-                _logger.LogInformation("Sample posts already exist, skipping...");
-                return;
-            }
-
-            var author = await _userManager.FindByEmailAsync("author@bloggingagent.com");
-            if (author == null)
-            {
-                _logger.LogWarning("Demo author not found, skipping blog post seeding");
-                return;
-            }
-
-            var posts = GetSamplePosts(author.Id);
-
             try
             {
-                foreach (var post in posts)
+                // Check if demo posts already exist by slug
+                if (_context.BlogPosts.Any(p => p.Slug == "getting-started-ai-blogging" || 
+                                                p.Slug == "rise-machine-learning-modern-applications" || 
+                                                p.Slug == "seo-best-practices-2024"))
                 {
-                    _context.BlogPosts.Add(post);
+                    _logger.LogInformation("Sample posts already exist, skipping...");
+                    return;
                 }
+
+                var author = await _userManager.FindByEmailAsync("author@bloggingagent.com");
+                if (author == null)
+                {
+                    _logger.LogWarning("Demo author not found, skipping blog post seeding");
+                    return;
+                }
+
+                var posts = GetSamplePosts(author.Id);
+
+                // Add all posts and save once
+                _context.BlogPosts.AddRange(posts);
                 await _context.SaveChangesAsync();
+                
                 _logger.LogInformation("Blog post seeding completed - Added {Count} sample posts", posts.Count);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error seeding blog posts");
+                throw;
             }
         }
 
