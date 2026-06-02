@@ -22,6 +22,9 @@ namespace BloggingAgent.Data.EntityConfigurations
             entity.HasIndex(e => e.BlogPostId).IsUnique();
             entity.HasIndex(e => e.IsDeleted);
 
+            // Note: Relationship is configured in BlogPostConfiguration
+            // to avoid duplicate/conflicting foreign key definitions
+
             // Configure TrafficSources as JSON with simple value comparer
             entity.Property(e => e.TrafficSources)
                   .HasConversion(
