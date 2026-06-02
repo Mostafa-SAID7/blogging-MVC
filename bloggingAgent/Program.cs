@@ -107,15 +107,15 @@ try
 
                 logger.LogInformation("Ensuring database exists and is up to date");
                 
-                // Wrap in timeout to prevent infinite waits
-                var task = context.Database.EnsureCreatedAsync();
-                if (!task.Wait(TimeSpan.FromSeconds(30)))
+                // Apply migrations instead of EnsureCreated
+                var migrateTask = context.Database.MigrateAsync();
+                if (!migrateTask.Wait(TimeSpan.FromSeconds(30)))
                 {
-                    logger.LogError("Database creation timed out after 30 seconds");
+                    logger.LogError("Database migration timed out after 30 seconds");
                 }
                 else
                 {
-                    logger.LogInformation("Database ready");
+                    logger.LogInformation("Database migrations applied successfully");
                 }
 
                 logger.LogInformation("Seeding database with initial data");
