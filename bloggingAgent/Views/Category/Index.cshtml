@@ -1,0 +1,81 @@
+@using BloggingAgent.Models.DTOs
+@model List<CategoryDto>
+
+@{
+    ViewData["Title"] = "Blog Categories";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="fas fa-folder me-2"></i>Blog Categories
+            </h2>
+            <p class="text-muted">Browse all categories and discover content by topic</p>
+        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="col-md-4 text-md-end">
+                <a href="@Url.Action("Manage", "Category")" class="btn btn-primary">
+                    <i class="fas fa-cog me-1"></i>Manage Categories
+                </a>
+            </div>
+        }
+    </div>
+
+    @if (Model != null && Model.Count > 0)
+    {
+        <div class="row">
+            @foreach (var category in Model.OrderBy(c => c.DisplayOrder))
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <a href="@Url.Action("Details", "Category", new { id = category.Id })" class="text-decoration-none">
+                        <div class="card h-100 shadow-sm hover-shadow" style="transition: transform 0.3s, box-shadow 0.3s;">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-tag me-2" style="color: #4F46E5;"></i>@category.Name
+                                        </h5>
+                                        <p class="card-text text-muted">@category.Description</p>
+                                    </div>
+                                </div>
+
+                                <hr class="my-3" />
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-file-alt me-1"></i>
+                                            <strong>@category.PostCount</strong> 
+                                            @(category.PostCount == 1 ? "post" : "posts")
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <small class="text-primary">
+                                            <i class="fas fa-arrow-right me-1"></i>View All
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            No categories available at the moment.
+        </div>
+    }
+</div>
+
+<style>
+    .hover-shadow:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>

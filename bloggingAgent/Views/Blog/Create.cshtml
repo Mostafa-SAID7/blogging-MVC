@@ -1,0 +1,157 @@
+@model CreateBlogPostViewModel
+
+@{
+    ViewData["Title"] = "Create Blog Post";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-pen-fancy me-2"></i>Create New Blog Post
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="Create" id="createForm">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- Title -->
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Post Title *</label>
+                            <input asp-for="Title" class="form-control" placeholder="Enter an engaging title..." />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <!-- Slug -->
+                        <div class="mb-3">
+                            <label asp-for="Slug" class="form-label">URL Slug *</label>
+                            <input asp-for="Slug" class="form-control" placeholder="post-url-slug" />
+                            <small class="text-muted">Auto-generated from title if left empty</small>
+                            <span asp-validation-for="Slug" class="text-danger"></span>
+                        </div>
+
+                        <!-- Excerpt -->
+                        <div class="mb-3">
+                            <label asp-for="Excerpt" class="form-label">Excerpt</label>
+                            <textarea asp-for="Excerpt" class="form-control" rows="2" placeholder="Brief summary of the post..."></textarea>
+                            <span asp-validation-for="Excerpt" class="text-danger"></span>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mb-3">
+                            <label asp-for="Content" class="form-label">Content *</label>
+                            <textarea asp-for="Content" class="form-control" rows="10" placeholder="Write your content here (supports HTML)..." id="contentEditor"></textarea>
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Category" class="form-label">Category *</label>
+                                    <select asp-for="Category" class="form-select">
+                                        <option value="">-- Select Category --</option>
+                                        <option value="Technology">Technology</option>
+                                        <option value="Business">Business</option>
+                                        <option value="Lifestyle">Lifestyle</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <span asp-validation-for="Category" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <!-- Tone -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Tone" class="form-label">Tone *</label>
+                                    <select asp-for="Tone" class="form-select">
+                                        <option value="">-- Select Tone --</option>
+                                        <option value="Professional">Professional</option>
+                                        <option value="Casual">Casual</option>
+                                        <option value="Formal">Formal</option>
+                                        <option value="Friendly">Friendly</option>
+                                    </select>
+                                    <span asp-validation-for="Tone" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            <label asp-for="Tags" class="form-label">Tags</label>
+                            <input asp-for="Tags" class="form-control" placeholder="Enter tags separated by commas..." />
+                            <small class="text-muted">Example: AI, Technology, Tutorial</small>
+                            <span asp-validation-for="Tags" class="text-danger"></span>
+                        </div>
+
+                        <!-- SEO Settings -->
+                        <div class="card bg-light mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-search me-2"></i>SEO Settings
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label asp-for="SeoTitle" class="form-label">SEO Title</label>
+                                    <input asp-for="SeoTitle" class="form-control" placeholder="50-60 characters" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="SeoDescription" class="form-label">Meta Description</label>
+                                    <textarea asp-for="SeoDescription" class="form-control" rows="2" placeholder="150-160 characters"></textarea>
+                                </div>
+
+                                <div class="mb-0">
+                                    <label asp-for="SeoKeywords" class="form-label">Keywords</label>
+                                    <input asp-for="SeoKeywords" class="form-control" placeholder="Comma-separated keywords" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="mb-3">
+                            <label asp-for="Status" class="form-label">Status *</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="Draft">Save as Draft</option>
+                                <option value="Published">Publish Now</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" name="action" value="save">
+                                <i class="fas fa-save me-1"></i>
+                                @(Model.Status == "Published" ? "Publish" : "Save Draft")
+                            </button>
+                            <a href="@Url.Action("Index", "Blog")" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Auto-generate slug from title
+        document.getElementById('Title').addEventListener('blur', function() {
+            const title = this.value;
+            const slug = title
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+            document.getElementById('Slug').value = slug;
+        });
+    </script>
+}

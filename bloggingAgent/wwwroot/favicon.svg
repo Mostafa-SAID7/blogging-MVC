@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="#4F46E5"/>
+  
+  <!-- Pen/pencil for blogging -->
+  <g transform="translate(50, 50)">
+    <!-- Paper/document -->
+    <rect x="-20" y="-18" width="30" height="36" fill="#FFFFFF" rx="2" ry="2"/>
+    
+    <!-- Lines on paper (representing text) -->
+    <line x1="-16" y1="-12" x2="8" y2="-12" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round"/>
+    <line x1="-16" y1="-6" x2="12" y2="-6" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round"/>
+    <line x1="-16" y1="0" x2="12" y2="0" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round"/>
+    <line x1="-16" y1="6" x2="8" y2="6" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Pen nib -->
+    <path d="M 12 -8 L 18 -14 L 20 -12 L 14 -6 Z" fill="#F59E0B" opacity="0.9"/>
+    
+    <!-- Pen barrel -->
+    <line x1="12" y1="-6" x2="8" y2="8" stroke="#F59E0B" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+  </g>
+</svg>
