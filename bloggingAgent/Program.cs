@@ -9,119 +9,145 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add Kestrel Configuration
-builder.AddKestrelConfiguration();
-
-// Add services to the container
-builder.Services.AddControllersWithViews();
-
-// Add Database Configuration
-builder.Services.AddDatabaseConfiguration(builder.Configuration);
-
-// Add Identity Configuration
-builder.Services.AddIdentityConfiguration();
-
-// Add Cookie Configuration
-builder.Services.AddCookieConfiguration();
-
-// Add Session Configuration
-builder.Services.AddSessionConfiguration();
-
-// Add Caching Configuration
-builder.Services.AddCachingConfiguration();
-
-// Add HTTP Client Configuration
-builder.Services.AddHttpClientConfiguration();
-
-// Add Application Settings Configuration
-builder.Services.AddApplicationSettingsConfiguration(builder.Configuration);
-
-// Add CORS Configuration
-builder.Services.AddCorsConfiguration();
-
-// Add Health Check Configuration
-builder.Services.AddHealthCheckConfiguration();
-
-// Add Logging Configuration
-builder.AddLoggingConfiguration();
-
-// Register Database Seeders
-builder.Services.AddScoped<BloggingAgent.Data.Seeders.RoleSeeder>();
-builder.Services.AddScoped<BloggingAgent.Data.Seeders.UserSeeder>();
-builder.Services.AddScoped<BloggingAgent.Data.Seeders.CategorySeeder>();
-builder.Services.AddScoped<BloggingAgent.Data.Seeders.BlogPostSeeder>();
-builder.Services.AddScoped<BloggingAgent.Data.Seeders.AgentSettingsSeeder>();
-builder.Services.AddScoped<BloggingAgent.Data.DatabaseSeeder>();
-
-// Register Services (moved to extension method for better organization)
-builder.Services.AddBloggingAgentServices();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-    app.UseMigrationsEndPoint();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-}
-
-// Do NOT use HTTPS redirection in Replit (proxy handles TLS)
-// app.UseHttpsRedirection();
-
-app.UseStaticFiles(new StaticFileOptions
-{
-    OnPrepareResponse = ctx =>
-    {
-        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000");
-    }
-});
-
-// Apply Middleware Configuration
-app.UseApplicationMiddleware();
-
-// Map Application Routes
-app.MapApplicationRoutes();
-
-// Database Initialization (graceful error handling for hosted environments)
 try
 {
-    using (var scope = app.Services.CreateScope())
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Add Kestrel Configuration
+    builder.AddKestrelConfiguration();
+
+    // Add services to the container
+    builder.Services.AddControllersWithViews();
+
+    // Add Database Configuration
+    builder.Services.AddDatabaseConfiguration(builder.Configuration);
+
+    // Add Identity Configuration
+    builder.Services.AddIdentityConfiguration();
+
+    // Add Cookie Configuration
+    builder.Services.AddCookieConfiguration();
+
+    // Add Session Configuration
+    builder.Services.AddSessionConfiguration();
+
+    // Add Caching Configuration
+    builder.Services.AddCachingConfiguration();
+
+    // Add HTTP Client Configuration
+    builder.Services.AddHttpClientConfiguration();
+
+    // Add Application Settings Configuration
+    builder.Services.AddApplicationSettingsConfiguration(builder.Configuration);
+
+    // Add CORS Configuration
+    builder.Services.AddCorsConfiguration();
+
+    // Add Health Check Configuration
+    builder.Services.AddHealthCheckConfiguration();
+
+    // Add Logging Configuration
+    builder.AddLoggingConfiguration();
+
+    // Register Database Seeders
+    builder.Services.AddScoped<BloggingAgent.Data.Seeders.RoleSeeder>();
+    builder.Services.AddScoped<BloggingAgent.Data.Seeders.UserSeeder>();
+    builder.Services.AddScoped<BloggingAgent.Data.Seeders.CategorySeeder>();
+    builder.Services.AddScoped<BloggingAgent.Data.Seeders.BlogPostSeeder>();
+    builder.Services.AddScoped<BloggingAgent.Data.Seeders.AgentSettingsSeeder>();
+    builder.Services.AddScoped<BloggingAgent.Data.DatabaseSeeder>();
+
+    // Register Services (moved to extension method for better organization)
+    builder.Services.AddBloggingAgentServices();
+
+    var app = builder.Build();
+
+    // Configure the HTTP request pipeline
+    if (app.Environment.IsDevelopment())
     {
-        var services = scope.ServiceProvider;
-        var logger = services.GetRequiredService<ILogger<Program>>();
+        app.UseDeveloperExceptionPage();
+        app.UseMigrationsEndPoint();
+    }
+    else
+    {
+        app.UseExceptionHandler("/Home/Error");
+    }
 
-        try
+    // Do NOT use HTTPS redirection in hosted environments
+    // app.UseHttpsRedirection();
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = ctx =>
         {
-            var context = services.GetRequiredService<ApplicationDbContext>();
-            var seeder = services.GetRequiredService<BloggingAgent.Data.DatabaseSeeder>();
-
-            logger.LogInformation("Ensuring database exists and is up to date");
-            await context.Database.EnsureCreatedAsync();
-
-            logger.LogInformation("Seeding database with initial data");
-            await seeder.SeedAsync();
-
-            logger.LogInformation("Database initialization completed successfully");
+            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000");
         }
-        catch (Exception ex)
+    });
+
+    // Apply Middleware Configuration
+    app.UseApplicationMiddleware();
+
+    // Map Application Routes
+    app.MapApplicationRoutes();
+
+    // Database Initialization (graceful error handling for hosted environments)
+    try
+    {
+        using (var scope = app.Services.CreateScope())
         {
-            logger.LogError(ex, "An error occurred while initializing the database. Application will continue running.");
-            // Don't throw - allow app to run even if seeding fails
-            // This prevents WAS crashes on hosted environments
+            var services = scope.ServiceProvider;
+            var logger = services.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                logger.LogInformation("Starting database initialization...");
+
+                var context = services.GetRequiredService<ApplicationDbContext>();
+                var seeder = services.GetRequiredService<BloggingAgent.Data.DatabaseSeeder>();
+
+                logger.LogInformation("Ensuring database exists and is up to date");
+                
+                // Wrap in timeout to prevent infinite waits
+                var task = context.Database.EnsureCreatedAsync();
+                if (!task.Wait(TimeSpan.FromSeconds(30)))
+                {
+                    logger.LogError("Database creation timed out after 30 seconds");
+                }
+                else
+                {
+                    logger.LogInformation("Database ready");
+                }
+
+                logger.LogInformation("Seeding database with initial data");
+                var seedTask = seeder.SeedAsync();
+                if (!seedTask.Wait(TimeSpan.FromSeconds(60)))
+                {
+                    logger.LogError("Database seeding timed out after 60 seconds");
+                }
+                else
+                {
+                    logger.LogInformation("Database seeding completed successfully");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while initializing the database. Application will continue running.");
+                // Don't throw - allow app to run even if seeding fails
+            }
         }
     }
+    catch (Exception ex)
+    {
+        var initLogger = app.Services.GetRequiredService<ILogger<Program>>();
+        initLogger.LogError(ex, "Critical error during database initialization scope");
+        // Continue anyway - don't crash the application
+    }
+
+    app.Run();
 }
 catch (Exception ex)
 {
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "Critical error during database initialization scope");
-    // Continue anyway - don't crash the application
+    Console.Error.WriteLine($"Fatal error during application startup: {ex}");
+    System.Diagnostics.Debugger.Break();
+    throw;
 }
-
-app.Run();

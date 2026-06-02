@@ -16,15 +16,15 @@ namespace BloggingAgent.Data.EntityConfigurations
             entity.HasIndex(e => e.BlogPostId).IsUnique();
             entity.HasIndex(e => e.LastUpdated);
 
-            // Configure TrafficSources as JSON
+            // Configure TrafficSources as JSON with simple value comparer
             entity.Property(e => e.TrafficSources)
                   .HasConversion(
                       v => System.Text.Json.JsonSerializer.Serialize(v, new System.Text.Json.JsonSerializerOptions()),
                       v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(v, new System.Text.Json.JsonSerializerOptions()) ?? new Dictionary<string, int>()
                   )
                   .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<Dictionary<string, int>>(
-                      (c1, c2) => c1.SequenceEqual(c2),
-                      c => c.Aggregate(0, (a, kvp) => HashCode.Combine(a, kvp.Key.GetHashCode(), kvp.Value.GetHashCode())),
+                      (c1, c2) => c1 != null && c2 != null && c1.Count == c2.Count && c1.SequenceEqual(c2),
+                      c => c.Aggregate(0, (a, kvp) => unchecked(a * 397 ^ kvp.Key.GetHashCode() ^ kvp.Value.GetHashCode())),
                       c => new Dictionary<string, int>(c)
                   ));
 

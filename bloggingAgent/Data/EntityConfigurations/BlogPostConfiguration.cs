@@ -18,16 +18,16 @@ namespace BloggingAgent.Data.EntityConfigurations
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.Status);
 
-            // Configure Tags as JSON
+            // Configure Tags as JSON with simple value comparer
             entity.Property(e => e.Tags)
                   .HasConversion(
                       v => string.Join(',', v),
                       v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
                   )
                   .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<string>>(
-                      (c1, c2) => c1.SequenceEqual(c2),
-                      c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                      c => c.ToList()
+                      (c1, c2) => c1 != null && c2 != null && c1.Count == c2.Count && c1.SequenceEqual(c2),
+                      c => c.Aggregate(0, (a, v) => unchecked(a * 397 ^ v.GetHashCode())),
+                      c => new List<string>(c)
                   ));
 
             // Relationships
