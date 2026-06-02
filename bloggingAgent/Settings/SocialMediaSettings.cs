@@ -1,4 +1,4 @@
-namespace BloggingAgent.Configuration
+namespace BloggingAgent.Settings
 {
     public class SocialMediaSettings
     {

@@ -37,7 +37,7 @@ global using BloggingAgent.Services.Email;
 global using BloggingAgent.Services.SocialMedia;
 global using BloggingAgent.Data.Repositories;
 global using BloggingAgent.Agents;
-global using BloggingAgent.Configuration;
+global using BloggingAgent.Settings;
 global using BloggingAgent.Utilities;
 global using BloggingAgent.Extensions;
 global using BloggingAgent.Middleware;
