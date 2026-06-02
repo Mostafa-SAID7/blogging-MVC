@@ -38,18 +38,27 @@ namespace BloggingAgent.Data
             {
                 _logger.LogInformation("Starting database seeding...");
 
-                await _roleSeeder.SeedAsync();
-                await _userSeeder.SeedAsync();
-                await _categorySeeder.SeedAsync();
-                await _blogPostSeeder.SeedAsync();
-                await _agentSettingsSeeder.SeedAsync();
+                try { await _roleSeeder.SeedAsync(); }
+                catch (Exception ex) { _logger.LogError(ex, "Error seeding roles"); }
 
-                _logger.LogInformation("Database seeding completed successfully");
+                try { await _userSeeder.SeedAsync(); }
+                catch (Exception ex) { _logger.LogError(ex, "Error seeding users"); }
+
+                try { await _categorySeeder.SeedAsync(); }
+                catch (Exception ex) { _logger.LogError(ex, "Error seeding categories"); }
+
+                try { await _blogPostSeeder.SeedAsync(); }
+                catch (Exception ex) { _logger.LogError(ex, "Error seeding blog posts"); }
+
+                try { await _agentSettingsSeeder.SeedAsync(); }
+                catch (Exception ex) { _logger.LogError(ex, "Error seeding agent settings"); }
+
+                _logger.LogInformation("Database seeding completed");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred during database seeding");
-                throw;
+                _logger.LogError(ex, "Unexpected error during database seeding orchestration");
+                // Don't rethrow - allow partial seeding to succeed
             }
         }
     }

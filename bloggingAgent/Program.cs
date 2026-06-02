@@ -88,30 +88,40 @@ app.UseApplicationMiddleware();
 // Map Application Routes
 app.MapApplicationRoutes();
 
-// Database Initialization
-using (var scope = app.Services.CreateScope())
+// Database Initialization (graceful error handling for hosted environments)
+try
 {
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
-
-    try
+    using (var scope = app.Services.CreateScope())
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        var seeder = services.GetRequiredService<BloggingAgent.Data.DatabaseSeeder>();
+        var services = scope.ServiceProvider;
+        var logger = services.GetRequiredService<ILogger<Program>>();
 
-        logger.LogInformation("Ensuring database exists and is up to date");
-        await context.Database.EnsureCreatedAsync();
+        try
+        {
+            var context = services.GetRequiredService<ApplicationDbContext>();
+            var seeder = services.GetRequiredService<BloggingAgent.Data.DatabaseSeeder>();
 
-        logger.LogInformation("Seeding database with initial data");
-        await seeder.SeedAsync();
+            logger.LogInformation("Ensuring database exists and is up to date");
+            await context.Database.EnsureCreatedAsync();
 
-        logger.LogInformation("Database initialization completed successfully");
+            logger.LogInformation("Seeding database with initial data");
+            await seeder.SeedAsync();
+
+            logger.LogInformation("Database initialization completed successfully");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while initializing the database. Application will continue running.");
+            // Don't throw - allow app to run even if seeding fails
+            // This prevents WAS crashes on hosted environments
+        }
     }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while initializing the database");
-        throw;
-    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "Critical error during database initialization scope");
+    // Continue anyway - don't crash the application
 }
 
 app.Run();

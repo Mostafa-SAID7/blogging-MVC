@@ -18,19 +18,35 @@ namespace BloggingAgent.Data.Seeders
         {
             _logger.LogInformation("Starting category seeding...");
 
-            var categories = GetCategories();
-
-            foreach (var category in categories)
+            try
             {
-                if (!_context.Categories.Any(c => c.Slug == category.Slug))
-                {
-                    _context.Categories.Add(category);
-                    _logger.LogInformation("Added category: {CategoryName}", category.Name);
-                }
-            }
+                var categories = GetCategories();
 
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Category seeding completed");
+                foreach (var category in categories)
+                {
+                    try
+                    {
+                        if (!_context.Categories.Any(c => c.Slug == category.Slug))
+                        {
+                            _context.Categories.Add(category);
+                            await _context.SaveChangesAsync();
+                            _logger.LogInformation("Added category: {CategoryName}", category.Name);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error adding category: {CategoryName}", category.Name);
+                        // Continue with next category instead of failing entirely
+                    }
+                }
+
+                _logger.LogInformation("Category seeding completed");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during category seeding orchestration");
+                // Don't rethrow - allow app to continue
+            }
         }
 
         private List<Category> GetCategories()
