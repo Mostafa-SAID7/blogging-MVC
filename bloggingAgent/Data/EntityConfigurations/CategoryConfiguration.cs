@@ -12,6 +12,8 @@ namespace BloggingAgent.Data.EntityConfigurations
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Slug).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Icon).HasMaxLength(50).IsRequired(false); // Allow NULL for Icon
+            entity.Property(e => e.Color).HasMaxLength(7).IsRequired(false); // Allow NULL for Color
             entity.HasIndex(e => e.Slug).IsUnique();
             entity.HasIndex(e => e.IsActive);
 

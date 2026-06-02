@@ -16,7 +16,12 @@ namespace BloggingAgent.Data.EntityConfigurations
                 .HasConversion(
                     v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions)null),
                     v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(v, (System.Text.Json.JsonSerializerOptions)null) ?? new Dictionary<string, object>())
-                .HasColumnType("TEXT");
+                .HasColumnType("TEXT")
+                .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<Dictionary<string, object>>(
+                    (c1, c2) => c1.SequenceEqual(c2),
+                    c => c.Aggregate(0, (a, kvp) => HashCode.Combine(a, kvp.Key.GetHashCode(), kvp.Value != null ? kvp.Value.GetHashCode() : 0)),
+                    c => new Dictionary<string, object>(c)
+                ));
             entity.HasIndex(e => e.Key);
             entity.HasIndex(e => new { e.Key, e.Category });
             entity.HasIndex(e => e.ExpiresAt);

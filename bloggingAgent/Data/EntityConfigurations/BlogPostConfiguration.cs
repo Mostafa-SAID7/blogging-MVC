@@ -23,7 +23,12 @@ namespace BloggingAgent.Data.EntityConfigurations
                   .HasConversion(
                       v => string.Join(',', v),
                       v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
-                  );
+                  )
+                  .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<string>>(
+                      (c1, c2) => c1.SequenceEqual(c2),
+                      c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                      c => c.ToList()
+                  ));
 
             // Relationships
             entity.HasOne(e => e.SeoMetadata)
@@ -37,9 +42,14 @@ namespace BloggingAgent.Data.EntityConfigurations
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne<ApplicationUser>()
-                  .WithMany(u => u.Posts)
+                  .WithMany(u => u.BlogPosts)
                   .HasForeignKey(e => e.AuthorId)
                   .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasMany(e => e.Comments)
+                  .WithOne(c => c.BlogPost)
+                  .HasForeignKey(c => c.BlogPostId)
+                  .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

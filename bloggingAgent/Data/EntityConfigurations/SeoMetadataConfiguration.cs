@@ -25,7 +25,12 @@ namespace BloggingAgent.Data.EntityConfigurations
                   .HasConversion(
                       v => System.Text.Json.JsonSerializer.Serialize(v, new System.Text.Json.JsonSerializerOptions()),
                       v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(v, new System.Text.Json.JsonSerializerOptions()) ?? new Dictionary<string, string>()
-                  );
+                  )
+                  .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<Dictionary<string, string>>(
+                      (c1, c2) => c1.SequenceEqual(c2),
+                      c => c.Aggregate(0, (a, kvp) => HashCode.Combine(a, kvp.Key.GetHashCode(), kvp.Value.GetHashCode())),
+                      c => new Dictionary<string, string>(c)
+                  ));
 
             // Add foreign key relationship to BlogPost
             entity.HasOne<BlogPost>()
