@@ -103,11 +103,12 @@ namespace BloggingAgent.Models.DTOs
         public int DraftPosts { get; set; }
         public int TotalComments { get; set; }
         public int TotalLikes { get; set; }
+        public int TotalViews { get; set; }
         public int FollowersCount { get; set; }
         public int FollowingCount { get; set; }
         public double AveragePostRating { get; set; }
         public Dictionary<string, int> PostsByMonth { get; set; } = new Dictionary<string, int>();
         public Dictionary<string, int> TopCategories { get; set; } = new Dictionary<string, int>();
-        public List<string> RecentActivity { get; set; } = new List<string>();
+        public List<ActivityDto> RecentActivity { get; set; } = new List<ActivityDto>();
     }
 }

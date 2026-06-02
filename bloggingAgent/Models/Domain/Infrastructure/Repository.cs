@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using BloggingAgent.Models.Domain.Aggregates;
 
 namespace BloggingAgent.Models.Domain.Infrastructure
 {

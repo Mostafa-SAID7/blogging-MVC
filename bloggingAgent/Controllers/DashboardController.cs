@@ -366,7 +366,8 @@ namespace BloggingAgent.Controllers
 
         private async Task<int> GetTotalCommentsForUserAsync(string userId)
         {
-            var userPosts = await _blogPostRepository.FindAsync(p => p.Author == (await _userManager.FindByIdAsync(userId)).UserName);
+            var user = await _userManager.FindByIdAsync(userId);
+            var userPosts = await _blogPostRepository.FindAsync(p => p.Author == user.UserName);
             var postIds = userPosts.Select(p => p.Id).ToList();
             var comments = await _commentRepository.FindAsync(c => postIds.Contains(c.BlogPostId));
             return comments.Count();
@@ -387,9 +388,9 @@ namespace BloggingAgent.Controllers
                        .ToDictionary(g => g.Key, g => g.Count());
         }
 
-        private async Task<List<string>> GetRecentActivityAsync(string userId, int count)
+        private async Task<List<ActivityDto>> GetRecentActivityAsync(string userId, int count)
         {
-            var activities = new List<string>();
+            var activities = new List<ActivityDto>();
             var user = await _userManager.FindByIdAsync(userId);
 
             // Recent posts
@@ -399,7 +400,7 @@ namespace BloggingAgent.Controllers
 
             foreach (var post in recentPosts.OrderByDescending(p => p.CreatedAt).Take(count / 2))
             {
-                activities.Add($"Created post: {post.Title}");
+                activities.Add(new ActivityDto { Type = "post", Title = $"Created post: {post.Title}", Timestamp = post.CreatedAt });
             }
 
             // Recent comments (on user's posts)
@@ -411,10 +412,10 @@ namespace BloggingAgent.Controllers
 
             foreach (var comment in recentComments.OrderByDescending(c => c.CreatedAt).Take(count / 2))
             {
-                activities.Add($"Received comment on: {comment.BlogPost.Title}");
+                activities.Add(new ActivityDto { Type = "comment", Title = $"New comment received", Timestamp = comment.CreatedAt });
             }
 
-            return activities.Take(count).ToList();
+            return activities.OrderByDescending(a => a.Timestamp).Take(count).ToList();
         }
 
         private async Task<Dictionary<string, object>> GetDetailedAnalyticsAsync(string userId)

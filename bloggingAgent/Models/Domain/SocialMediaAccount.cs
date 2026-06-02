@@ -46,7 +46,7 @@ namespace BloggingAgent.Models.Domain
         // Computed properties
         public bool IsTokenExpired => TokenExpiresAt.HasValue && TokenExpiresAt.Value < DateTime.UtcNow;
         public bool NeedsRefresh => IsTokenExpired && !string.IsNullOrEmpty(RefreshToken);
-        public string PlatformDisplayName => GetPlatformDisplayName();
+        public string PlatformDisplayNameFormatted => GetPlatformDisplayName();
         public string PlatformColor => GetPlatformColor();
         public string PlatformIcon => GetPlatformIcon();
 

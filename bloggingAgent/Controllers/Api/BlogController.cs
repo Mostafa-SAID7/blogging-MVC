@@ -318,9 +318,9 @@ namespace BloggingAgent.Controllers.Api
                 Excerpt = post.Excerpt,
                 Author = new
                 {
-                    id = post.Author?.Id,
-                    name = post.Author?.DisplayName,
-                    email = post.Author?.Email
+                    id = post.AuthorId,
+                    name = post.Author,
+                    email = (string)null
                 },
                 CreatedAt = post.CreatedAt,
                 UpdatedAt = post.UpdatedAt,

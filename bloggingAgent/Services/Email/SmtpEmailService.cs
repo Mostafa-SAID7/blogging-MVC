@@ -22,7 +22,7 @@ namespace BloggingAgent.Services.Email
         public bool IsConfigured => !string.IsNullOrEmpty(_settings.SmtpServer) &&
                                    !string.IsNullOrEmpty(_settings.Username);
 
-        public async Task SendWelcomeEmailAsync(User user)
+        public async Task SendWelcomeEmailAsync(ApplicationUser user)
         {
             var subject = "Welcome to BloggingAgent!";
             var htmlContent = GenerateWelcomeEmailHtml(user);
@@ -34,7 +34,7 @@ namespace BloggingAgent.Services.Email
         public async Task SendCommentNotificationAsync(BlogPost post, Comment comment)
         {
             // Send notification to post author
-            if (post.Author != comment.User?.Username) // Don't notify if commenting on own post
+            if (post.Author != comment.AuthorName) // Don't notify if commenting on own post
             {
                 var subject = $"New comment on: {post.Title}";
                 var htmlContent = GenerateCommentNotificationHtml(post, comment);
@@ -57,7 +57,7 @@ namespace BloggingAgent.Services.Email
             await SendEmailAsync(authorEmail, subject, htmlContent, textContent);
         }
 
-        public async Task SendPasswordResetEmailAsync(User user, string resetToken)
+        public async Task SendPasswordResetEmailAsync(ApplicationUser user, string resetToken)
         {
             var subject = "Password Reset Request";
             var resetUrl = $"{_settings.BaseUrl}/auth/reset-password?token={resetToken}&email={Uri.EscapeDataString(user.Email)}";
@@ -104,7 +104,7 @@ namespace BloggingAgent.Services.Email
             }
         }
 
-        private string GenerateWelcomeEmailHtml(User user)
+        private string GenerateWelcomeEmailHtml(ApplicationUser user)
         {
             return $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
@@ -122,7 +122,7 @@ namespace BloggingAgent.Services.Email
                 </div>";
         }
 
-        private string GenerateWelcomeEmailText(User user)
+        private string GenerateWelcomeEmailText(ApplicationUser user)
         {
             return $@"
 Welcome to BloggingAgent, {user.FirstName}!
@@ -147,7 +147,7 @@ The BloggingAgent Team";
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
                     <h2>New Comment on Your Post</h2>
                     <p><strong>Post:</strong> {post.Title}</p>
-                    <p><strong>Comment by:</strong> {comment.User?.FirstName} {comment.User?.LastName}</p>
+                    <p><strong>Comment by:</strong> {comment.AuthorName}</p>
                     <p><strong>Comment:</strong></p>
                     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;'>
                         {comment.Content.Replace("\n", "<br>")}
@@ -162,7 +162,7 @@ The BloggingAgent Team";
 New Comment on Your Post
 
 Post: {post.Title}
-Comment by: {comment.User?.FirstName} {comment.User?.LastName}
+Comment by: {comment.AuthorName}
 Comment: {comment.Content}
 
 View comment: {_settings.BaseUrl}/blog/{post.Slug}#comments";
@@ -192,7 +192,7 @@ Your post is now live and available to readers.
 View your post: {_settings.BaseUrl}/blog/{post.Slug}";
         }
 
-        private string GeneratePasswordResetHtml(User user, string resetUrl)
+        private string GeneratePasswordResetHtml(ApplicationUser user, string resetUrl)
         {
             return $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
@@ -205,7 +205,7 @@ View your post: {_settings.BaseUrl}/blog/{post.Slug}";
                 </div>";
         }
 
-        private string GeneratePasswordResetText(User user, string resetUrl)
+        private string GeneratePasswordResetText(ApplicationUser user, string resetUrl)
         {
             return $@"
 Password Reset Request

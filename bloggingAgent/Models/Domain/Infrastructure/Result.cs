@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BloggingAgent.Models.Domain.Responses;
 
 namespace BloggingAgent.Models.Domain.Infrastructure
 {

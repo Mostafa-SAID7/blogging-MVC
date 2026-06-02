@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using BloggingAgent.Models.Enums;
-using BloggingAgent.Models.ValueObjects;
 
 namespace BloggingAgent.Models.Domain
 {
@@ -43,9 +42,13 @@ namespace BloggingAgent.Models.Domain
 
         public int WordCount { get; set; }
 
+        public int Likes { get; set; } = 0;
+        public int Shares { get; set; } = 0;
+
         // Navigation properties
         public virtual ApplicationUser AuthorUser { get; set; }
         public string AuthorUserId { get; set; }
+        public string AuthorId { get; set; }
 
         public virtual SeoMetadata SeoMetadata { get; set; }
         public virtual ContentAnalytics Analytics { get; set; }
@@ -53,7 +56,17 @@ namespace BloggingAgent.Models.Domain
         public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
         // Domain methods
-        public bool IsPublished => Status == PostStatus.Published;
+        public bool IsPublished
+        {
+            get => Status == PostStatus.Published;
+            set
+            {
+                if (value)
+                    Status = PostStatus.Published;
+                else if (Status == PostStatus.Published)
+                    Status = PostStatus.Draft;
+            }
+        }
 
         public bool IsDraft => Status == PostStatus.Draft;
 
@@ -61,18 +74,12 @@ namespace BloggingAgent.Models.Domain
 
         public void Publish()
         {
-            if (Status != PostStatus.Draft && Status != PostStatus.Review)
-                throw new InvalidOperationException("Only draft or review posts can be published");
-
             Status = PostStatus.Published;
             UpdatedAt = DateTime.UtcNow;
         }
 
         public void Unpublish()
         {
-            if (Status != PostStatus.Published)
-                throw new InvalidOperationException("Only published posts can be unpublished");
-
             Status = PostStatus.Draft;
             UpdatedAt = DateTime.UtcNow;
         }
@@ -120,9 +127,7 @@ namespace BloggingAgent.Models.Domain
         private int CalculateWordCount()
         {
             if (string.IsNullOrEmpty(Content)) return 0;
-
-            var words = Content.Split(new[] { ' ', '\n', '\r', '\t' },
-                StringSplitOptions.RemoveEmptyEntries);
+            var words = Content.Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries);
             return words.Length;
         }
 
@@ -132,10 +137,14 @@ namespace BloggingAgent.Models.Domain
             return Math.Max(1, (int)Math.Ceiling((double)WordCount / wordsPerMinute));
         }
 
-        // Domain events (for future CQRS implementation)
         public void MarkAsModified()
         {
             UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void AddDomainEvent(object domainEvent)
+        {
+            // Domain event stub - events collected here for future CQRS use
         }
     }
 }

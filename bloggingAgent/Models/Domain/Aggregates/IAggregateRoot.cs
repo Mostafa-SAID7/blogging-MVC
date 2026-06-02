@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BloggingAgent.Models.Domain.Events;
 
 namespace BloggingAgent.Models.Domain.Aggregates
 {

@@ -8,6 +8,8 @@ namespace BloggingAgent.Models.DTOs
         [EmailAddress]
         public string Email { get; set; }
 
+        public string UsernameOrEmail { get; set; }
+
         [Required]
         [DataType(DataType.Password)]
         public string Password { get; set; }
@@ -25,6 +27,8 @@ namespace BloggingAgent.Models.DTOs
         [Required]
         [Display(Name = "Last Name")]
         public string LastName { get; set; }
+
+        public string Username { get; set; }
 
         [Required]
         [EmailAddress]
