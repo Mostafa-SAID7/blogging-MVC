@@ -15,5 +15,8 @@ namespace BloggingAgent.Models.Domain
         public string OgImage { get; set; }
         public string TwitterCard { get; set; }
         public Dictionary<string, string> StructuredData { get; set; } = new Dictionary<string, string>();
+        
+        // Navigation property for consistency
+        public virtual BlogPost BlogPost { get; set; }
     }
 }

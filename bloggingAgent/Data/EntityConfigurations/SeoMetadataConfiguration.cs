@@ -31,12 +31,6 @@ namespace BloggingAgent.Data.EntityConfigurations
                       c => c.Aggregate(0, (a, kvp) => unchecked(a * 397 ^ kvp.Key.GetHashCode() ^ (kvp.Value != null ? kvp.Value.GetHashCode() : 0))),
                       c => new Dictionary<string, string>(c)
                   ));
-
-            // Add foreign key relationship to BlogPost
-            entity.HasOne<BlogPost>()
-                  .WithOne(b => b.SeoMetadata)
-                  .HasForeignKey<SeoMetadata>(e => e.BlogPostId)
-                  .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

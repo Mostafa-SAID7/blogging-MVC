@@ -39,30 +39,10 @@ namespace BloggingAgent.Data.Seeders
 
             var posts = GetSamplePosts(author.Id);
 
-            foreach (var post in posts)
-            {
-                // Add blog post first
-                _context.BlogPosts.Add(post);
-                await _context.SaveChangesAsync();
-                
-                // Then add related analytics and SEO metadata with proper foreign keys
-                if (post.Analytics != null)
-                {
-                    post.Analytics.BlogPostId = post.Id;
-                    _context.ContentAnalytics.Add(post.Analytics);
-                }
-
-                if (post.SeoMetadata != null)
-                {
-                    post.SeoMetadata.BlogPostId = post.Id;
-                    _context.SeoMetadata.Add(post.SeoMetadata);
-                }
-
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("Added sample post: {Title}", post.Title);
-            }
-
-            _logger.LogInformation("Blog post seeding completed");
+            // Save all posts with their related data in a single batch for better performance
+            _context.BlogPosts.AddRange(posts);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Blog post seeding completed - Added {Count} sample posts", posts.Count);
         }
 
         private List<BlogPost> GetSamplePosts(string authorId)
