@@ -2,9 +2,11 @@ using BloggingAgent.Agents;
 using BloggingAgent.Data.Repositories;
 using BloggingAgent.Services.Cache;
 using BloggingAgent.Services.Content;
+using BloggingAgent.Services.Email;
 using BloggingAgent.Services.LLM;
 using BloggingAgent.Services.Memory;
 using BloggingAgent.Services.SEO;
+using BloggingAgent.Services.SocialMedia;
 using BloggingAgent.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,6 +26,8 @@ namespace BloggingAgent.Extensions
             services.AddScoped<ISeoService, SeoService>();
             services.AddScoped<IContentFormatter, ContentFormatter>();
             services.AddScoped<ICacheService, MemoryCacheService>();
+            services.AddScoped<IEmailService, SmtpEmailService>();
+            services.AddScoped<ISocialMediaService, SocialMediaService>();
             services.AddScoped<MemoryAnalyzer>();
             services.AddScoped<SeoAnalyzer>();
 
@@ -32,16 +36,10 @@ namespace BloggingAgent.Extensions
             services.AddScoped<ILlmProvider, OllamaProvider>();
 
             // Register Agents
-            services.AddScoped<IBloggingAgent, BloggingAgent>();
+            services.AddScoped<IBloggingAgent, BloggingAgent.Agents.BloggingAgent>();
 
-            // Register Utilities
-            services.AddScoped<TextAnalyzer>();
-            services.AddScoped<SlugGenerator>();
-            services.AddScoped<WordCounter>();
-
-            // Register Middleware
-            services.AddScoped<Middleware.ErrorHandlingMiddleware>();
-            services.AddScoped<Middleware.RequestLoggingMiddleware>();
+            // Note: TextAnalyzer, SlugGenerator, WordCounter are static classes and don't need DI registration
+            // Note: Middleware (ErrorHandlingMiddleware, RequestLoggingMiddleware) are registered via UseMiddleware<>, not DI
 
             return services;
         }

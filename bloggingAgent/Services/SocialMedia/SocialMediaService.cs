@@ -74,24 +74,24 @@ namespace BloggingAgent.Services.SocialMedia
                 var accessToken = _configuration["SocialMedia:LinkedIn:AccessToken"];
                 var personId = _configuration["SocialMedia:LinkedIn:PersonId"];
 
-                var postData = new
+                var postData = new Dictionary<string, object>
                 {
-                    author = $"urn:li:person:{personId}",
-                    lifecycleState = "PUBLISHED",
-                    specificContent = new
+                    ["author"] = $"urn:li:person:{personId}",
+                    ["lifecycleState"] = "PUBLISHED",
+                    ["specificContent"] = new Dictionary<string, object>
                     {
-                        com.linkedin.ugc.ShareContent = new
+                        ["com.linkedin.ugc.ShareContent"] = new Dictionary<string, object>
                         {
-                            shareCommentary = new
+                            ["shareCommentary"] = new Dictionary<string, string>
                             {
-                                text = content
+                                ["text"] = content
                             },
-                            shareMediaCategory = imageUrl != null ? "IMAGE" : "NONE"
+                            ["shareMediaCategory"] = imageUrl != null ? "IMAGE" : "NONE"
                         }
                     },
-                    visibility = new
+                    ["visibility"] = new Dictionary<string, string>
                     {
-                        com.linkedin.ugc.MemberNetworkVisibility = "PUBLIC"
+                        ["com.linkedin.ugc.MemberNetworkVisibility"] = "PUBLIC"
                     }
                 };
 
@@ -139,8 +139,8 @@ namespace BloggingAgent.Services.SocialMedia
                     postData["link"] = imageUrl;
                 }
 
-                var content = new FormUrlEncodedContent(postData);
-                var response = await _httpClient.PostAsync($"https://graph.facebook.com/v18.0/{pageId}/feed", content);
+                var formContent = new FormUrlEncodedContent(postData);
+                var response = await _httpClient.PostAsync($"https://graph.facebook.com/v18.0/{pageId}/feed", formContent);
                 response.EnsureSuccessStatusCode();
 
                 _logger.LogInformation("Successfully posted to Facebook");

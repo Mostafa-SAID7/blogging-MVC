@@ -4,6 +4,7 @@ namespace BloggingAgent.Models.Domain
 {
     public class AgentSettings
     {
+        public int Id { get; set; }
         public string DefaultAuthor { get; set; }
         public int MaxPostLength { get; set; }
         public List<string> DefaultTags { get; set; } = new List<string>();

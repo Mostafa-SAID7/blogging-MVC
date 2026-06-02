@@ -194,14 +194,13 @@ namespace BloggingAgent.Controllers
         [HttpPost]
         public async Task<IActionResult> CreatePost(CreateSocialPostViewModel model)
         {
+            var user = await _userManager.GetUserAsync(User);
+
             if (!ModelState.IsValid)
             {
-                var user = await _userManager.GetUserAsync(User);
                 model.AvailableAccounts = (await _accountRepository.FindAsync(a => a.UserId == user.Id && a.IsActive)).ToList();
                 return View(model);
             }
-
-            var user = await _userManager.GetUserAsync(User);
 
             foreach (var accountId in model.SelectedAccountIds)
             {

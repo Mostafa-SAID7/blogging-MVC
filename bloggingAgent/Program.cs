@@ -15,17 +15,19 @@ using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel to listen on 0.0.0.0:5000
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Listen(System.Net.IPAddress.Any, 5000);
+});
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Configure Database
+// Configure Database (SQLite)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions => sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null)
+    options.UseSqlite(
+        builder.Configuration.GetConnectionString("DefaultConnection")
     ));
 
 // Configure Identity
@@ -45,7 +47,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.Lockout.AllowedForNewUsers = true;
 
     // User settings
-    options.User.AllUsersRequireUniqueEmail = true;
     options.User.RequireUniqueEmail = true;
 
     // Sign in settings
@@ -56,12 +57,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders()
 .AddDefaultUI();
 
-// Configure Application Cookies
+// Configure Application Cookies (relaxed for Replit proxy)
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    options.Cookie.SameSite = SameSiteMode.Lax;
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
@@ -69,14 +70,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-// Configure Session
+// Configure Session (relaxed for Replit proxy)
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
 // Configure Caching
@@ -103,6 +104,7 @@ builder.Services.Configure<SeoSettings>(builder.Configuration.GetSection("SeoSet
 builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection("CacheSettings"));
 builder.Services.Configure<ContentSettings>(builder.Configuration.GetSection("ContentSettings"));
 builder.Services.Configure<AgentSettings>(builder.Configuration.GetSection("AgentSettings"));
+builder.Services.Configure<BloggingAgent.Configuration.EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 // Register Services (moved to extension method for better organization)
 builder.Services.AddBloggingAgentServices();
@@ -119,17 +121,15 @@ builder.Services.AddCors(options =>
 
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("https://localhost:5001", "https://localhost:5000")
+        policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowAnyHeader();
     });
 });
 
 // Configure Health Checks
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<ApplicationDbContext>("Database")
-    .AddCheck<Utilities.DatabaseHealthCheck>("DatabaseHealthCheck");
+    .AddCheck<BloggingAgent.Utilities.DatabaseHealthCheck>("DatabaseHealthCheck");
 
 // Configure Logging
 builder.Logging.ClearProviders();
@@ -145,25 +145,8 @@ if (builder.Environment.IsDevelopment())
     builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
 }
 
-// Configure in Production
-if (builder.Environment.IsProduction())
-{
-    builder.Services.AddHsts(options =>
-    {
-        options.Preload = true;
-        options.IncludeSubDomains = true;
-        options.MaxAge = TimeSpan.FromDays(365);
-    });
-
-    builder.Services.AddHttpsRedirection(options =>
-    {
-        options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
-        options.HttpsPort = 443;
-    });
-}
-
 // Register Database Seeder (moved to utilities)
-builder.Services.AddScoped<Utilities.DatabaseSeeder>();
+builder.Services.AddScoped<BloggingAgent.Utilities.DatabaseSeeder>();
 
 var app = builder.Build();
 
@@ -176,15 +159,15 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Do NOT use HTTPS redirection in Replit (proxy handles TLS)
+// app.UseHttpsRedirection();
+
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        // Cache static files for 1 year
         ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000");
     }
 });
@@ -226,10 +209,10 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        var seeder = services.GetRequiredService<Utilities.DatabaseSeeder>();
+        var seeder = services.GetRequiredService<BloggingAgent.Utilities.DatabaseSeeder>();
 
         logger.LogInformation("Ensuring database exists and is up to date");
-        await context.Database.MigrateAsync();
+        await context.Database.EnsureCreatedAsync();
 
         logger.LogInformation("Seeding database with initial data");
         await seeder.SeedAsync();
@@ -244,8 +227,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-
-// Note: ApplicationUser, DatabaseSeeder, and DatabaseHealthCheck have been moved to their respective files:
-// - ApplicationUser: Models/Domain/ApplicationUser.cs
-// - DatabaseSeeder: Utilities/DatabaseSeeder.cs
-// - DatabaseHealthCheck: Utilities/DatabaseHealthCheck.cs

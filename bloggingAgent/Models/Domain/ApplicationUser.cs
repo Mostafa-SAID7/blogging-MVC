@@ -1,14 +1,15 @@
-e.fusing Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
+using System.Collections.Generic;
 
 namespace BloggingAgent.Models.Domain
 {
     public class ApplicationUser : IdentityUser
     {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Bio { get; set; }
-        public string AvatarUrl { get; set; }
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Bio { get; set; } = "";
+        public string AvatarUrl { get; set; } = "";
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public bool IsActive { get; set; } = true;
@@ -18,7 +19,10 @@ namespace BloggingAgent.Models.Domain
         public DateTime? LastPostDate { get; set; }
 
         // Navigation properties
-        public virtual System.Collections.Generic.ICollection<BlogPost> BlogPosts { get; set; }
+        public virtual ICollection<BlogPost> BlogPosts { get; set; }
+        public virtual ICollection<BlogPost> Posts { get; set; }
+        public virtual ICollection<Comment> Comments { get; set; }
+        public virtual ICollection<UserLogin> ExternalLogins { get; set; }
 
         public string GetFullName()
         {

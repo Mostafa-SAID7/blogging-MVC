@@ -7,7 +7,7 @@ namespace BloggingAgent.Models.DTOs
     {
         public Subscription CurrentSubscription { get; set; }
         public List<Payment> PaymentHistory { get; set; } = new List<Payment>();
-        public List<PricingPlan> AvailablePlans { get; set; } = new List<PricingPlan>();
+        public List<BloggingAgent.Models.DTOs.PricingPlan> AvailablePlans { get; set; } = new List<BloggingAgent.Models.DTOs.PricingPlan>();
         public bool IsSubscribed { get; set; }
     }
 
@@ -18,7 +18,8 @@ namespace BloggingAgent.Models.DTOs
         public ApplicationUser User { get; set; }
     }
 
-    public class PricingPlan
+    // BillingPricingPlan removed - using PricingPlan from HomeDto.cs
+    internal class BillingPricingPlan_Unused
     {
         public string Name { get; set; }
         public decimal Price { get; set; }

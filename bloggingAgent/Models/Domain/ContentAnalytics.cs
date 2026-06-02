@@ -6,6 +6,7 @@ namespace BloggingAgent.Models.Domain
     {
         public int Id { get; set; }
         public int BlogPostId { get; set; }
+        public virtual BlogPost BlogPost { get; set; }
         public int Views { get; set; }
         public int UniqueViews { get; set; }
         public int Shares { get; set; }

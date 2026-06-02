@@ -52,6 +52,7 @@ namespace BloggingAgent.Utilities
                     FirstName = "System",
                     LastName = "Administrator",
                     Bio = "Default system administrator",
+                    AvatarUrl = "",
                     CreatedAt = DateTime.UtcNow,
                     EmailConfirmed = true
                 };

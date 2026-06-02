@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
+using BloggingAgent.Models.Domain.Infrastructure;
 
 namespace BloggingAgent.Models.Domain.Responses
 {

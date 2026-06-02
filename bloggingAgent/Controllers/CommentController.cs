@@ -109,7 +109,7 @@ namespace BloggingAgent.Controllers
                         Message = $"{user.UserName} commented on your post: {post.Title}",
                         Type = "comment",
                         RelatedEntityType = "BlogPost",
-                        RelatedEntityId = post.Id,
+                        RelatedEntityId = post.Id.ToString(),
                         ActionUrl = $"/Blog/Details/{post.Slug}#comment-{comment.Id}"
                     });
             }
@@ -294,7 +294,7 @@ namespace BloggingAgent.Controllers
             {
                 TotalComments = comments.Count(),
                 TotalLikes = comments.Sum(c => c.LikesCount),
-                TotalReplies = comments.Count(c => c.IsReply),
+                TotalReplies = comments.Count(c => c.IsReply()),
                 RecentComments = comments.Count(c => c.CreatedAt > DateTime.UtcNow.AddDays(-7))
             };
 
@@ -322,7 +322,7 @@ namespace BloggingAgent.Controllers
                 CanEdit = comment.CanEdit,
                 CanDelete = comment.CanDelete,
                 Depth = comment.Depth,
-                IsReply = comment.IsReply,
+                IsReply = comment.IsReply(),
                 ParentCommentId = comment.ParentCommentId
             };
 

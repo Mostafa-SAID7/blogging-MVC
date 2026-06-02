@@ -1,5 +1,6 @@
 using System;
 using System.Linq.Expressions;
+using BloggingAgent.Models.Enums;
 
 namespace BloggingAgent.Models.Domain.Infrastructure
 {

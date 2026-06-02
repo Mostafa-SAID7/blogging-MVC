@@ -3,6 +3,13 @@ using System.Collections.Generic;
 
 namespace BloggingAgent.Models.DTOs
 {
+    public class ActivityDto
+    {
+        public string Type { get; set; }
+        public string Title { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+
     public class DashboardViewModel
     {
         public UserStatsDto UserStats { get; set; }

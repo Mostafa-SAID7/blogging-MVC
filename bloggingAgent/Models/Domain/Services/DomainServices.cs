@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using BloggingAgent.Models.Domain.Infrastructure;
+using BloggingAgent.Models.Domain.Events;
+using BloggingAgent.Models.Enums;
+using BloggingAgent.Models.ValueObjects;
 
 namespace BloggingAgent.Models.Domain.Services
 {
@@ -80,7 +84,8 @@ namespace BloggingAgent.Models.Domain.Services
                 // Calculate derived properties
                 blogPost.WordCount = CalculateWordCount(content);
                 blogPost.ReadingTimeMinutes = CalculateReadingTime(blogPost.WordCount);
-                blogPost.Excerpt = await GenerateExcerptAsync(content);
+                var excerptResult = await GenerateExcerptAsync(content);
+                blogPost.Excerpt = excerptResult.IsSuccess ? excerptResult.Value : string.Empty;
 
                 // Generate slug
                 blogPost.Slug = Slug.GenerateFromTitle(title).Value;

@@ -1,22 +1,20 @@
 using System;
 using System.Collections.Generic;
-using MediatR;
+using BloggingAgent.Models.Domain.Infrastructure;
+using BloggingAgent.Models.Enums;
 
 namespace BloggingAgent.Models.Domain.Commands
 {
     // Command base classes
-    public abstract class Command : IRequest<Result>
+    public abstract class Command
     {
         public Guid CommandId { get; } = Guid.NewGuid();
         public DateTime Timestamp { get; } = DateTime.UtcNow;
         public string UserId { get; set; }
     }
 
-    public abstract class Command<TResponse> : IRequest<Result<TResponse>>
+    public abstract class Command<TResponse> : Command
     {
-        public Guid CommandId { get; } = Guid.NewGuid();
-        public DateTime Timestamp { get; } = DateTime.UtcNow;
-        public string UserId { get; set; }
     }
 
     // BlogPost Commands

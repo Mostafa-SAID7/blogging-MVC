@@ -7,7 +7,6 @@
 
 @{
     var commentRepository = ViewContext.HttpContext.RequestServices.GetService<IRepository<Comment>>();
-    var userRepository = ViewContext.HttpContext.RequestServices.GetService<IRepository<User>>();
     var comments = await commentRepository.FindAsync(c => c.BlogPostId == Model && c.IsApproved && !c.IsSpam);
     var commentsList = comments.OrderByDescending(c => c.CreatedAt).ToList();
 }
@@ -20,7 +19,7 @@
             <div class="comment mb-4 p-3 border rounded">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div class="comment-author">
-                        <strong>@(comment.User?.FirstName + " " + comment.User?.LastName ?? "Anonymous")</strong>
+                        <strong>@(comment.AuthorName ?? "Anonymous")</strong>
                         <small class="text-muted ms-2">@comment.CreatedAt.ToRelativeTime()</small>
                     </div>
                     @if (User.IsInRole("Administrator") || User.IsInRole("Editor"))
@@ -85,7 +84,7 @@
                                 <div class="reply mb-3 p-2 bg-light rounded">
                                     <div class="d-flex justify-content-between align-items-start mb-1">
                                         <div class="reply-author">
-                                            <strong>@(reply.User?.FirstName + " " + reply.User?.LastName ?? "Anonymous")</strong>
+                                            <strong>@(reply.AuthorName ?? "Anonymous")</strong>
                                             <small class="text-muted ms-2">@reply.CreatedAt.ToRelativeTime()</small>
                                         </div>
                                     </div>
