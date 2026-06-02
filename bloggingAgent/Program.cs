@@ -47,7 +47,12 @@ builder.Services.AddHealthCheckConfiguration();
 // Add Logging Configuration
 builder.AddLoggingConfiguration();
 
-// Register Database Seeder
+// Register Database Seeders
+builder.Services.AddScoped<BloggingAgent.Data.Seeders.RoleSeeder>();
+builder.Services.AddScoped<BloggingAgent.Data.Seeders.UserSeeder>();
+builder.Services.AddScoped<BloggingAgent.Data.Seeders.CategorySeeder>();
+builder.Services.AddScoped<BloggingAgent.Data.Seeders.BlogPostSeeder>();
+builder.Services.AddScoped<BloggingAgent.Data.Seeders.AgentSettingsSeeder>();
 builder.Services.AddScoped<BloggingAgent.Data.DatabaseSeeder>();
 
 // Register Services (moved to extension method for better organization)
