@@ -49,7 +49,7 @@
         $('.metric-value').each(function () {
             const currentValue = parseInt($(this).text().replace(/,/g, ''));
             const newValue = currentValue + Math.floor(Math.random() * 10) - 5; // Random fluctuation
-            $(this).text(BloggingAgent.formatNumber(Math.max(0, newValue)));
+            $(this).text(DataManager.formatNumber(Math.max(0, newValue)));
         });
     }
 
@@ -68,8 +68,8 @@
         const ctx = document.getElementById('viewsChart');
         if (!ctx) return;
 
-        const labels = getLast7Days();
-        const data = generateRandomData(7, 50, 200);
+        const labels = DataManager.getLastNDays(7);
+        const data = DataManager.generateRandomData(7, 50, 200);
 
         charts.views = new Chart(ctx, {
             type: 'line',
@@ -96,7 +96,7 @@
                         beginAtZero: true,
                         ticks: {
                             callback: function (value) {
-                                return BloggingAgent.formatNumber(value);
+                                return DataManager.formatNumber(value);
                             }
                         }
                     }
@@ -170,7 +170,7 @@
 
     function updateCharts() {
         if (charts.views) {
-            const newData = generateRandomData(7, 50, 200);
+            const newData = DataManager.generateRandomData(7, 50, 200);
             charts.views.data.datasets[0].data = newData;
             charts.views.update();
         }
@@ -239,53 +239,8 @@
     }
 
     function showRefreshFeedback() {
-        const feedback = $('#refreshFeedback');
-        if (feedback.length === 0) {
-            $('body').append('<div id="refreshFeedback" class="alert alert-success position-fixed" style="top: 20px; right: 20px; z-index: 9999;">Analytics refreshed!</div>');
-        }
-
-        setTimeout(() => {
-            $('#refreshFeedback').fadeOut(() => $(this).remove());
-        }, 3000);
+        UIManager.showAlert('Analytics refreshed!', 'success', { duration: 3000, position: 'top-right' });
     }
-
-    function getLast7Days() {
-        const dates = [];
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            dates.push(date.toLocaleDateString());
-        }
-        return dates;
-    }
-
-    function generateRandomData(count, min, max) {
-        const data = [];
-        for (let i = 0; i < count; i++) {
-            data.push(Math.floor(Math.random() * (max - min + 1)) + min);
-        }
-        return data;
-    }
-
-    // Post details modal functionality
-    window.showPostAnalytics = function (postId) {
-        const modal = new bootstrap.Modal(document.getElementById('postAnalyticsModal'));
-        const content = document.getElementById('postAnalyticsContent');
-
-        content.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-
-        // Fetch post analytics
-        BloggingAgent.ajaxRequest(`/analytics/post/${postId}`)
-            .then(data => {
-                content.innerHTML = generatePostAnalyticsHTML(data);
-            })
-            .catch(error => {
-                content.innerHTML = '<div class="alert alert-danger">Error loading post analytics.</div>';
-                console.error('Error:', error);
-            });
-
-        modal.show();
-    };
 
     function generatePostAnalyticsHTML(data) {
         return `
@@ -293,10 +248,10 @@
                 <div class="col-md-6">
                     <h6>Traffic Metrics</h6>
                     <div class="mb-3">
-                        <strong>Views:</strong> ${BloggingAgent.formatNumber(data.views || 0)}
+                        <strong>Views:</strong> ${DataManager.formatNumber(data.views || 0)}
                     </div>
                     <div class="mb-3">
-                        <strong>Unique Views:</strong> ${BloggingAgent.formatNumber(data.uniqueViews || 0)}
+                        <strong>Unique Views:</strong> ${DataManager.formatNumber(data.uniqueViews || 0)}
                     </div>
                     <div class="mb-3">
                         <strong>Bounce Rate:</strong> ${(data.bounceRate || 0).toFixed(1)}%
@@ -320,12 +275,32 @@
             <div class="row">
                 ${Object.entries(data.trafficSources || {}).map(([source, count]) => `
                     <div class="col-md-4 mb-2">
-                        <strong>${source}:</strong> ${BloggingAgent.formatNumber(count)}
+                        <strong>${source}:</strong> ${DataManager.formatNumber(count)}
                     </div>
                 `).join('')}
             </div>
         `;
     }
+
+    // Post details modal functionality
+    window.showPostAnalytics = function (postId) {
+        const modal = new bootstrap.Modal(document.getElementById('postAnalyticsModal'));
+        const content = document.getElementById('postAnalyticsContent');
+
+        content.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+        // Fetch post analytics using unified BloggingAgent API
+        BloggingAgent.get(`/analytics/post/${postId}`)
+            .then(data => {
+                content.innerHTML = generatePostAnalyticsHTML(data);
+            })
+            .catch(error => {
+                content.innerHTML = '<div class="alert alert-danger">Error loading post analytics.</div>';
+                console.error('Error:', error);
+            });
+
+        modal.show();
+    };
 
     // Cleanup on page unload
     $(window).on('beforeunload', function () {

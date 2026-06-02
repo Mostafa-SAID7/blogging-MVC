@@ -45,14 +45,14 @@
     function validateForm(formData) {
         const topic = formData.get('Topic');
         if (!topic || topic.trim().length < 3) {
-            showAlert('Please enter a topic with at least 3 characters.', 'danger');
+            UIManager.showAlert('Please enter a topic with at least 3 characters.', 'danger');
             $('#Topic').focus();
             return false;
         }
 
         const targetWordCount = parseInt(formData.get('TargetWordCount'));
         if (targetWordCount < 100 || targetWordCount > 5000) {
-            showAlert('Target word count must be between 100 and 5000.', 'danger');
+            UIManager.showAlert('Target word count must be between 100 and 5000.', 'danger');
             $('#TargetWordCount').focus();
             return false;
         }
@@ -96,39 +96,37 @@
             }
         }, 800);
 
-        // Submit form
-        $.ajax({
-            url: form.attr('action'),
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (response) {
-                clearInterval(progressInterval);
-                progressBar.css('width', '100%');
-                progressText.text('Redirecting to your new post...');
-
-                // Redirect after short delay
-                setTimeout(() => {
-                    window.location.href = response.redirectUrl || '/blog';
-                }, 1500);
-            },
-            error: function (xhr, status, error) {
-                clearInterval(progressInterval);
-                generationInProgress = false;
-
-                submitBtn.prop('disabled', false).html('<i class="fas fa-magic me-2"></i>Generate Post');
-
-                let errorMessage = 'An error occurred while generating the post.';
-                if (xhr.responseJSON && xhr.responseJSON.error) {
-                    errorMessage = xhr.responseJSON.error.message || errorMessage;
-                }
-
-                progressText.text('Generation failed: ' + errorMessage);
-                progressBar.addClass('bg-danger');
-
-                showAlert(errorMessage, 'danger');
+        // Submit form using unified BloggingAgent API with FormData support
+        const formDataToSend = new FormData(form[0]);
+        
+        // BloggingAgent.post() handles CSRF token and error handling automatically
+        BloggingAgent.post(form.attr('action'), formDataToSend, {
+            headers: {
+                'Content-Type': undefined // Let browser set proper content-type for FormData
             }
+        })
+        .then(response => {
+            clearInterval(progressInterval);
+            progressBar.css('width', '100%');
+            progressText.text('Redirecting to your new post...');
+
+            // Redirect after short delay
+            setTimeout(() => {
+                window.location.href = response.redirectUrl || '/blog';
+            }, 1500);
+        })
+        .catch(error => {
+            clearInterval(progressInterval);
+            generationInProgress = false;
+
+            submitBtn.prop('disabled', false).html('<i class="fas fa-magic me-2"></i>Generate Post');
+
+            let errorMessage = error.message || 'An error occurred while generating the post.';
+
+            progressText.text('Generation failed: ' + errorMessage);
+            progressBar.addClass('bg-danger');
+
+            UIManager.showAlert(errorMessage, 'danger');
         });
     }
 
@@ -139,21 +137,21 @@
         inputs.on('input change', function () {
             clearTimeout(autoSaveTimeout);
 
-            // Save draft to localStorage
+            // Save draft to localStorage using centralized DataManager
             const formData = {};
             inputs.each(function () {
                 const input = $(this);
                 formData[input.attr('name')] = input.val();
             });
 
-            localStorage.setItem('blogDraft', JSON.stringify(formData));
+            DataManager.saveToStorage('blogDraft', formData);
 
-            // Show auto-save indicator
-            showAutoSaveIndicator();
+            // Show auto-save indicator using UIManager
+            UIManager.showAlert('Draft saved', 'info', { duration: 2000, position: 'bottom-right' });
 
             autoSaveTimeout = setTimeout(() => {
                 // Could send to server for persistent draft saving
-                console.log('Draft auto-saved');
+                console.log('Draft auto-saved to localStorage');
             }, 2000);
         });
 
@@ -162,18 +160,18 @@
     }
 
     function loadDraft(form) {
-        const draft = localStorage.getItem('blogDraft');
+        // Load draft from localStorage using centralized DataManager
+        const draft = DataManager.loadFromStorage('blogDraft', null);
         if (draft) {
             try {
-                const formData = JSON.parse(draft);
-                Object.keys(formData).forEach(key => {
+                Object.keys(draft).forEach(key => {
                     const input = form.find(`[name="${key}"]`);
                     if (input.length) {
-                        input.val(formData[key]);
+                        input.val(draft[key]);
                     }
                 });
 
-                showAlert('Draft loaded from your previous session.', 'info');
+                UIManager.showAlert('Draft loaded from your previous session.', 'info');
             } catch (e) {
                 console.error('Error loading draft:', e);
             }
@@ -210,33 +208,6 @@
         wordCountSelect.on('change', function () {
             $(this).addClass('user-changed');
         });
-    }
-
-    function showAutoSaveIndicator() {
-        const indicator = $('#autoSaveIndicator');
-        if (indicator.length === 0) {
-            $('body').append('<div id="autoSaveIndicator" class="alert alert-info position-fixed" style="top: 20px; right: 20px; z-index: 9999; max-width: 300px;">Draft saved</div>');
-        }
-
-        clearTimeout(window.autoSaveTimeout);
-        window.autoSaveTimeout = setTimeout(() => {
-            $('#autoSaveIndicator').fadeOut(() => $(this).remove());
-        }, 2000);
-    }
-
-    function showAlert(message, type = 'info') {
-        const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show position-fixed" style="top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; max-width: 500px;">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-
-        $('body').append(alertHtml);
-
-        setTimeout(() => {
-            $('.alert').fadeOut(() => $(this).remove());
-        }, 5000);
     }
 
     // Export for potential use in other scripts
