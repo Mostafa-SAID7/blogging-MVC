@@ -26,12 +26,10 @@ namespace BloggingAgent.Data.Seeders
 
             try
             {
-                // Check if demo posts already exist by slug
-                if (_context.BlogPosts.Any(p => p.Slug == "getting-started-ai-blogging" || 
-                                                p.Slug == "rise-machine-learning-modern-applications" || 
-                                                p.Slug == "seo-best-practices-2024"))
+                // Check if any blog posts exist
+                if (_context.BlogPosts.Any())
                 {
-                    _logger.LogInformation("Sample posts already exist, skipping...");
+                    _logger.LogInformation("Blog posts already exist in database, skipping seeding...");
                     return;
                 }
 
@@ -45,15 +43,18 @@ namespace BloggingAgent.Data.Seeders
                 var posts = GetSamplePosts(author.Id);
 
                 // Add all posts and save once
-                _context.BlogPosts.AddRange(posts);
-                await _context.SaveChangesAsync();
+                foreach (var post in posts)
+                {
+                    _context.BlogPosts.Add(post);
+                }
                 
+                await _context.SaveChangesAsync();
                 _logger.LogInformation("Blog post seeding completed - Added {Count} sample posts", posts.Count);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error seeding blog posts");
-                throw;
+                // Continue app startup even if seeding fails
             }
         }
 
