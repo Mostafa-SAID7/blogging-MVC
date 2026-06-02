@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BloggingAgent.Services.SEO
 {
-    public class SeoAnalyzer
+    public class SeoAnalyzer : ISeoAnalyzer
     {
         private readonly ISeoService _seoService;
         private readonly ILogger<SeoAnalyzer> _logger;

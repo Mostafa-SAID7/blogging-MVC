@@ -1,0 +1,46 @@
+@model BloggingAgent.Models.ViewModels.ErrorViewModel
+@{
+    ViewData["Title"] = Model.Title ?? "Error";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5 text-center">
+                    <span class="display-1 text-danger">
+                        @if (Model.StatusCode.HasValue)
+                        {
+                            @Model.StatusCode
+                        }
+                        else
+                        {
+                            <i class="fas fa-exclamation-triangle"></i>
+                        }
+                    </span>
+
+                    <h1 class="mt-4">@Model.Title</h1>
+                    <p class="lead text-muted">@Model.Message</p>
+
+                    @if (!string.IsNullOrEmpty(Model.DetailedMessage))
+                    {
+                        <p class="mb-4">@Model.DetailedMessage</p>
+                    }
+
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <a class="btn btn-primary" href="@Url.Action("Index", "Home")">Return to Home</a>
+                        <a class="btn btn-outline-secondary" href="@Url.Action("Contact", "Home")">Contact Support</a>
+                    </div>
+
+                    @if (Model.ShowRequestId)
+                    {
+                        <div class="mt-4 text-muted small">
+                            <p class="mb-1">Request ID:</p>
+                            <code>@Model.RequestId</code>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

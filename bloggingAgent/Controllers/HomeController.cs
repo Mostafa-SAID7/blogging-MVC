@@ -4,6 +4,7 @@ using BloggingAgent.Data.Repositories;
 using BloggingAgent.Models.Domain;
 using BloggingAgent.Models.ViewModels;
 using BloggingAgent.Services.Cache;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BloggingAgent.Controllers
@@ -32,39 +33,58 @@ namespace BloggingAgent.Controllers
 
         public async Task<IActionResult> Index()
         {
-            const string cacheKey = "home_page_data";
-            var cachedModel = await _cacheService.GetAsync<HomeViewModel>(cacheKey);
-
-            if (cachedModel != null)
+            try
             {
-                return View(cachedModel);
+                const string cacheKey = "home_page_data";
+                var cachedModel = await _cacheService.GetAsync<HomeViewModel>(cacheKey);
+
+                if (cachedModel != null)
+                {
+                    return View(cachedModel);
+                }
+
+                // Get featured posts (latest published posts)
+                var featuredPosts = await GetFeaturedPostsAsync(6);
+
+                // Get platform statistics
+                var stats = await GetPlatformStatsAsync();
+
+                // Get recent activity
+                var recentActivity = await GetRecentActivityAsync(5);
+
+                // Get popular categories
+                var popularCategories = await GetPopularCategoriesAsync(6);
+
+                var model = new HomeViewModel
+                {
+                    FeaturedPosts = featuredPosts,
+                    PlatformStats = stats,
+                    RecentActivity = recentActivity,
+                    PopularCategories = popularCategories,
+                    IsAuthenticated = User.Identity?.IsAuthenticated ?? false
+                };
+
+                // Cache for 10 minutes
+                await _cacheService.SetAsync(cacheKey, model, TimeSpan.FromMinutes(10));
+
+                return View(model);
             }
-
-            // Get featured posts (latest published posts)
-            var featuredPosts = await GetFeaturedPostsAsync(6);
-
-            // Get platform statistics
-            var stats = await GetPlatformStatsAsync();
-
-            // Get recent activity
-            var recentActivity = await GetRecentActivityAsync(5);
-
-            // Get popular categories
-            var popularCategories = await GetPopularCategoriesAsync(6);
-
-            var model = new HomeViewModel
+            catch (Exception ex)
             {
-                FeaturedPosts = featuredPosts,
-                PlatformStats = stats,
-                RecentActivity = recentActivity,
-                PopularCategories = popularCategories,
-                IsAuthenticated = User.Identity?.IsAuthenticated ?? false
-            };
+                _logger.LogError(ex, "Error loading home page content.");
+                Response.StatusCode = 500;
 
-            // Cache for 10 minutes
-            await _cacheService.SetAsync(cacheKey, model, TimeSpan.FromMinutes(10));
+                var errorModel = new ErrorViewModel
+                {
+                    StatusCode = 500,
+                    Title = "Application Error",
+                    Message = "We were unable to load the home page due to an internal error.",
+                    DetailedMessage = "Please try again later or contact support if the issue persists.",
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                };
 
-            return View(model);
+                return View("Error", errorModel);
+            }
         }
 
         [HttpGet]
@@ -316,9 +336,50 @@ namespace BloggingAgent.Controllers
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public IActionResult Error(int? statusCode = null)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            Response.StatusCode = statusCode ?? 500;
+
+            var errorModel = new ErrorViewModel
+            {
+                StatusCode = statusCode,
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            };
+
+            if (statusCode.HasValue)
+            {
+                switch (statusCode.Value)
+                {
+                    case 404:
+                        errorModel.Title = "Page Not Found";
+                        errorModel.Message = "We couldn't find the page you were looking for.";
+                        errorModel.DetailedMessage = "The link may be broken or the page may have been removed.";
+                        break;
+                    case 403:
+                        errorModel.Title = "Access Denied";
+                        errorModel.Message = "You don't have permission to view this page.";
+                        errorModel.DetailedMessage = "If you believe this is a mistake, please contact support.";
+                        break;
+                    default:
+                        errorModel.Title = "Unexpected Error";
+                        errorModel.Message = "An error occurred while processing your request.";
+                        errorModel.DetailedMessage = "Please try again later or return to the home page.";
+                        break;
+                }
+            }
+            else
+            {
+                var exceptionFeature = HttpContext.Features.Get<IExceptionHandlerFeature>();
+                if (exceptionFeature != null)
+                {
+                    _logger.LogError(exceptionFeature.Error, "Unhandled exception routed to error page.");
+                    errorModel.Title = "Application Error";
+                    errorModel.Message = "Something went wrong while processing your request.";
+                    errorModel.DetailedMessage = "Our team has been notified and we are working to resolve the issue.";
+                }
+            }
+
+            return View(errorModel);
         }
 
         private async Task<List<BlogPostDto>> GetFeaturedPostsAsync(int count)

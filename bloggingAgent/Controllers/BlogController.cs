@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using BloggingAgent.Agents;
@@ -10,6 +11,7 @@ using BloggingAgent.Services.Content;
 using BloggingAgent.Services.SEO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using AutoMapper;
 
 namespace BloggingAgent.Controllers
 {
@@ -21,6 +23,8 @@ namespace BloggingAgent.Controllers
         private readonly ISeoService _seoService;
         private readonly IContentFormatter _contentFormatter;
         private readonly ICacheService _cacheService;
+        private readonly ISyndicationService _syndicationService;
+        private readonly IMapper _mapper;
         private readonly ILogger<BlogController> _logger;
 
         public BlogController(
@@ -30,6 +34,8 @@ namespace BloggingAgent.Controllers
             ISeoService seoService,
             IContentFormatter contentFormatter,
             ICacheService cacheService,
+            ISyndicationService syndicationService,
+            IMapper mapper,
             ILogger<BlogController> logger)
         {
             _blogPostRepository = blogPostRepository;
@@ -38,6 +44,8 @@ namespace BloggingAgent.Controllers
             _seoService = seoService;
             _contentFormatter = contentFormatter;
             _cacheService = cacheService;
+            _syndicationService = syndicationService;
+            _mapper = mapper;
             _logger = logger;
         }
 
@@ -47,147 +55,177 @@ namespace BloggingAgent.Controllers
         [Route("blog/index")]
         public async Task<IActionResult> Index(string searchQuery, string tag, int page = 1, string sortBy = "date")
         {
-            const int pageSize = 12;
-            var cacheKey = $"blog_index_{searchQuery}_{tag}_{page}_{sortBy}";
-
-            // Try cache first
-            var cachedModel = await _cacheService.GetAsync<BlogIndexViewModel>(cacheKey);
-            if (cachedModel != null)
+            try
             {
-                _logger.LogDebug("Serving blog index from cache: {CacheKey}", cacheKey);
-                return View(cachedModel);
+                const int pageSize = 12;
+                var cacheKey = $"blog_index_{searchQuery}_{tag}_{page}_{sortBy}";
+
+                // Try cache first
+                var cachedModel = await _cacheService.GetAsync<BlogIndexViewModel>(cacheKey);
+                if (cachedModel != null)
+                {
+                    _logger.LogDebug("Serving blog index from cache: {CacheKey}", cacheKey);
+                    return View(cachedModel);
+                }
+
+                var query = await _blogPostRepository.GetAllAsync();
+
+                // Apply filters
+                if (!string.IsNullOrEmpty(searchQuery))
+                {
+                    query = query.Where(p =>
+                        p.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                        p.Content.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                        p.Tags.Any(t => t.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)));
+                    _logger.LogInformation("Applied search filter: {SearchQuery}", searchQuery);
+                }
+
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    query = query.Where(p => p.Tags.Contains(tag));
+                    _logger.LogInformation("Applied tag filter: {Tag}", tag);
+                }
+
+                // Get published posts only
+                query = query.Where(p => p.IsPublished);
+
+                // Apply sorting
+                query = sortBy.ToLower() switch
+                {
+                    "title" => query.OrderBy(p => p.Title),
+                    "popular" => query.OrderByDescending(p => p.Analytics?.Views ?? 0),
+                    "oldest" => query.OrderBy(p => p.CreatedAt),
+                    _ => query.OrderByDescending(p => p.CreatedAt) // "date" or default
+                };
+
+                var totalPosts = query.Count();
+                var posts = query.Skip((page - 1) * pageSize)
+                               .Take(pageSize)
+                               .Select(p => _mapper.Map<BlogPostDto>(p))
+                               .ToList();
+
+                // Get tag counts for all published posts
+                var allPosts = await _blogPostRepository.GetAllAsync();
+                var tagCounts = allPosts.Where(p => p.IsPublished)
+                                      .SelectMany(p => p.Tags)
+                                      .GroupBy(t => t)
+                                      .Select(g => new { Tag = g.Key, Count = g.Count() })
+                                      .OrderByDescending(x => x.Count)
+                                      .Take(20)
+                                      .ToDictionary(x => x.Tag, x => x.Count);
+
+                var model = new BlogIndexViewModel
+                {
+                    Posts = posts,
+                    CurrentPage = page,
+                    TotalPages = (int)Math.Ceiling(totalPosts / (double)pageSize),
+                    SearchQuery = searchQuery,
+                    SelectedTags = string.IsNullOrEmpty(tag) ? new List<string>() : new List<string> { tag },
+                    TagCounts = tagCounts,
+                    SortBy = sortBy,
+                    TotalPosts = totalPosts
+                };
+
+                // Cache for 10 minutes
+                await _cacheService.SetAsync(cacheKey, model, TimeSpan.FromMinutes(10));
+
+                _logger.LogInformation("Generated blog index with {PostCount} posts for page {Page}", posts.Count, page);
+                return View(model);
             }
-
-            var query = await _blogPostRepository.GetAllAsync();
-
-            // Apply filters
-            if (!string.IsNullOrEmpty(searchQuery))
+            catch (Exception ex)
             {
-                query = query.Where(p =>
-                    p.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                    p.Content.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                    p.Tags.Any(t => t.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)));
-                _logger.LogInformation("Applied search filter: {SearchQuery}", searchQuery);
+                _logger.LogError(ex, "Unhandled error while generating blog index.");
+                return View("Error", new ErrorViewModel
+                {
+                    StatusCode = 500,
+                    Title = "Blog Unavailable",
+                    Message = "We were unable to load the blog at this time.",
+                    DetailedMessage = "Please try again later or contact support if the problem continues.",
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                });
             }
-
-            if (!string.IsNullOrEmpty(tag))
-            {
-                query = query.Where(p => p.Tags.Contains(tag));
-                _logger.LogInformation("Applied tag filter: {Tag}", tag);
-            }
-
-            // Get published posts only
-            query = query.Where(p => p.IsPublished);
-
-            // Apply sorting
-            query = sortBy.ToLower() switch
-            {
-                "title" => query.OrderBy(p => p.Title),
-                "popular" => query.OrderByDescending(p => p.Analytics?.Views ?? 0),
-                "oldest" => query.OrderBy(p => p.CreatedAt),
-                _ => query.OrderByDescending(p => p.CreatedAt) // "date" or default
-            };
-
-            var totalPosts = query.Count();
-            var posts = query.Skip((page - 1) * pageSize)
-                           .Take(pageSize)
-                           .Select(MapToDto)
-                           .ToList();
-
-            // Get tag counts for all published posts
-            var allPosts = await _blogPostRepository.GetAllAsync();
-            var tagCounts = allPosts.Where(p => p.IsPublished)
-                                  .SelectMany(p => p.Tags)
-                                  .GroupBy(t => t)
-                                  .Select(g => new { Tag = g.Key, Count = g.Count() })
-                                  .OrderByDescending(x => x.Count)
-                                  .Take(20)
-                                  .ToDictionary(x => x.Tag, x => x.Count);
-
-            var model = new BlogIndexViewModel
-            {
-                Posts = posts,
-                CurrentPage = page,
-                TotalPages = (int)Math.Ceiling(totalPosts / (double)pageSize),
-                SearchQuery = searchQuery,
-                SelectedTags = string.IsNullOrEmpty(tag) ? new List<string>() : new List<string> { tag },
-                TagCounts = tagCounts,
-                SortBy = sortBy,
-                TotalPosts = totalPosts
-            };
-
-            // Cache for 10 minutes
-            await _cacheService.SetAsync(cacheKey, model, TimeSpan.FromMinutes(10));
-
-            _logger.LogInformation("Generated blog index with {PostCount} posts for page {Page}", posts.Count, page);
-            return View(model);
         }
 
         [HttpGet]
         [Route("blog/{slug}")]
         public async Task<IActionResult> Details(string slug)
         {
-            if (string.IsNullOrEmpty(slug))
-                return NotFound();
-
-            var cacheKey = $"blog_details_{slug}";
-            var cachedModel = await _cacheService.GetAsync<BlogDetailViewModel>(cacheKey);
-            if (cachedModel != null)
+            try
             {
-                _logger.LogDebug("Serving blog details from cache: {Slug}", slug);
-                return View(cachedModel);
-            }
+                if (string.IsNullOrEmpty(slug))
+                    return NotFound();
 
-            var post = (await _blogPostRepository.GetAllAsync())
-                      .FirstOrDefault(p => p.Slug == slug && p.IsPublished);
-
-            if (post == null)
-            {
-                _logger.LogWarning("Blog post not found: {Slug}", slug);
-                return NotFound();
-            }
-
-            // Update analytics
-            await UpdatePostAnalyticsAsync(post.Id);
-
-            // Get related posts
-            var relatedPosts = await GetRelatedPostsAsync(post, 4);
-
-            // Generate SEO analysis
-            var seoAnalysis = await _seoService.AnalyzeContentAsync(post.Content, post.Title);
-
-            // Extract excerpt if not set
-            var excerpt = post.Excerpt;
-            if (string.IsNullOrEmpty(excerpt))
-            {
-                excerpt = await _contentFormatter.ExtractExcerptAsync(post.Content);
-            }
-
-            var model = new BlogDetailViewModel
-            {
-                Post = new BlogPostDto
+                var cacheKey = $"blog_details_{slug}";
+                var cachedModel = await _cacheService.GetAsync<BlogDetailViewModel>(cacheKey);
+                if (cachedModel != null)
                 {
-                    Id = post.Id,
-                    Title = post.Title,
-                    Slug = post.Slug,
-                    Content = post.Content,
-                    Excerpt = excerpt,
-                    Author = post.Author,
-                    CreatedAt = post.CreatedAt,
-                    UpdatedAt = post.UpdatedAt,
-                    IsPublished = post.IsPublished,
-                    Tags = post.Tags
-                },
-                SeoAnalysis = seoAnalysis,
-                RelatedPosts = relatedPosts.Select(MapToDto).ToList(),
-                CanEdit = User.Identity?.IsAuthenticated ?? false // TODO: Add proper authorization
-            };
+                    _logger.LogDebug("Serving blog details from cache: {Slug}", slug);
+                    return View(cachedModel);
+                }
 
-            // Cache for 15 minutes
-            await _cacheService.SetAsync(cacheKey, model, TimeSpan.FromMinutes(15));
+                var post = (await _blogPostRepository.GetAllAsync())
+                          .FirstOrDefault(p => p.Slug == slug && p.IsPublished);
 
-            _logger.LogInformation("Served blog post: {Title} ({Slug})", post.Title, slug);
-            return View(model);
+                if (post == null)
+                {
+                    _logger.LogWarning("Blog post not found: {Slug}", slug);
+                    return NotFound();
+                }
+
+                // Update analytics
+                await UpdatePostAnalyticsAsync(post.Id);
+
+                // Get related posts
+                var relatedPosts = await GetRelatedPostsAsync(post, 4);
+
+                // Generate SEO analysis
+                var seoAnalysis = await _seoService.AnalyzeContentAsync(post.Content, post.Title);
+
+                // Extract excerpt if not set
+                var excerpt = post.Excerpt;
+                if (string.IsNullOrEmpty(excerpt))
+                {
+                    excerpt = await _contentFormatter.ExtractExcerptAsync(post.Content);
+                }
+
+                var model = new BlogDetailViewModel
+                {
+                    Post = new BlogPostDto
+                    {
+                        Id = post.Id,
+                        Title = post.Title,
+                        Slug = post.Slug,
+                        Content = post.Content,
+                        Excerpt = excerpt,
+                        Author = post.Author,
+                        CreatedAt = post.CreatedAt,
+                        UpdatedAt = post.UpdatedAt,
+                        IsPublished = post.IsPublished,
+                        Tags = post.Tags
+                    },
+                    SeoAnalysis = seoAnalysis,
+                    RelatedPosts = relatedPosts.Select(p => _mapper.Map<BlogPostDto>(p)).ToList(),
+                    CanEdit = User.Identity?.IsAuthenticated ?? false // TODO: Add proper authorization
+                };
+
+                // Cache for 15 minutes
+                await _cacheService.SetAsync(cacheKey, model, TimeSpan.FromMinutes(15));
+
+                _logger.LogInformation("Served blog post: {Title} ({Slug})", post.Title, slug);
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error while loading blog post {Slug}.", slug);
+                return View("Error", new ErrorViewModel
+                {
+                    StatusCode = 500,
+                    Title = "Unable to Load Post",
+                    Message = "We couldn't load the requested blog post right now.",
+                    DetailedMessage = "The blog is temporarily unavailable. Please try again later.",
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                });
+            }
         }
 
         [HttpGet]
@@ -224,7 +262,7 @@ namespace BloggingAgent.Controllers
                 var generatedPost = await _bloggingAgent.GeneratePostAsync(request);
 
                 // Save to database
-                var domainPost = MapToDomain(generatedPost);
+                var domainPost = _mapper.Map<BlogPost>(generatedPost);
                 await _blogPostRepository.AddAsync(domainPost);
 
                 // Clear relevant caches
@@ -247,45 +285,75 @@ namespace BloggingAgent.Controllers
         [Route("blog/rss")]
         public async Task<IActionResult> Rss()
         {
-            var cacheKey = "blog_rss_feed";
-            var cachedFeed = await _cacheService.GetAsync<string>(cacheKey);
-            if (cachedFeed != null)
-                return Content(cachedFeed, "application/rss+xml");
+            try
+            {
+                var cacheKey = "blog_rss_feed";
+                var cachedFeed = await _cacheService.GetAsync<string>(cacheKey);
+                if (cachedFeed != null)
+                    return Content(cachedFeed, "application/rss+xml");
 
-            var posts = (await _blogPostRepository.GetAllAsync())
-                       .Where(p => p.IsPublished)
-                       .OrderByDescending(p => p.CreatedAt)
-                       .Take(20)
-                       .ToList();
+                var posts = (await _blogPostRepository.GetAllAsync())
+                           .Where(p => p.IsPublished)
+                           .OrderByDescending(p => p.CreatedAt)
+                           .Take(20)
+                           .ToList();
 
-            var rssContent = GenerateRssFeed(posts);
+                var rssContent = _syndicationService.GenerateRssFeed(posts);
 
-            // Cache for 30 minutes
-            await _cacheService.SetAsync(cacheKey, rssContent, TimeSpan.FromMinutes(30));
+                // Cache for 30 minutes
+                await _cacheService.SetAsync(cacheKey, rssContent, TimeSpan.FromMinutes(30));
 
-            return Content(rssContent, "application/rss+xml");
+                return Content(rssContent, "application/rss+xml");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating RSS feed.");
+                return View("Error", new ErrorViewModel
+                {
+                    StatusCode = 500,
+                    Title = "Feed Unavailable",
+                    Message = "The RSS feed cannot be generated right now.",
+                    DetailedMessage = "Please try again later or visit the blog directly.",
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                });
+            }
         }
 
         [HttpGet]
         [Route("blog/sitemap.xml")]
         public async Task<IActionResult> Sitemap()
         {
-            var cacheKey = "blog_sitemap";
-            var cachedSitemap = await _cacheService.GetAsync<string>(cacheKey);
-            if (cachedSitemap != null)
-                return Content(cachedSitemap, "application/xml");
+            try
+            {
+                var cacheKey = "blog_sitemap";
+                var cachedSitemap = await _cacheService.GetAsync<string>(cacheKey);
+                if (cachedSitemap != null)
+                    return Content(cachedSitemap, "application/xml");
 
-            var posts = (await _blogPostRepository.GetAllAsync())
-                       .Where(p => p.IsPublished)
-                       .OrderByDescending(p => p.CreatedAt)
-                       .ToList();
+                var posts = (await _blogPostRepository.GetAllAsync())
+                           .Where(p => p.IsPublished)
+                           .OrderByDescending(p => p.CreatedAt)
+                           .ToList();
 
-            var sitemapContent = GenerateSitemap(posts);
+                var sitemapContent = _syndicationService.GenerateSitemap(posts);
 
-            // Cache for 60 minutes
-            await _cacheService.SetAsync(cacheKey, sitemapContent, TimeSpan.FromHours(1));
+                // Cache for 60 minutes
+                await _cacheService.SetAsync(cacheKey, sitemapContent, TimeSpan.FromHours(1));
 
-            return Content(sitemapContent, "application/xml");
+                return Content(sitemapContent, "application/xml");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating sitemap.");
+                return View("Error", new ErrorViewModel
+                {
+                    StatusCode = 500,
+                    Title = "Site Map Unavailable",
+                    Message = "The sitemap cannot be generated at the moment.",
+                    DetailedMessage = "Please try again later or contact support for help.",
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                });
+            }
         }
 
         [HttpPost]
@@ -428,106 +496,8 @@ namespace BloggingAgent.Controllers
             _logger.LogDebug("Cleared all blog-related caches");
         }
 
-        private BlogPostDto MapToDto(BlogPost post)
-        {
-            return new BlogPostDto
-            {
-                Id = post.Id,
-                Title = post.Title,
-                Slug = post.Slug,
-                Content = post.Content,
-                Excerpt = post.Excerpt,
-                Author = post.Author,
-                CreatedAt = post.CreatedAt,
-                UpdatedAt = post.UpdatedAt,
-                IsPublished = post.IsPublished,
-                Tags = post.Tags
-            };
-        }
+        
 
-        private BlogPost MapToDomain(BlogPostDto dto)
-        {
-            return new BlogPost
-            {
-                Title = dto.Title,
-                Slug = dto.Slug,
-                Content = dto.Content,
-                Excerpt = dto.Excerpt,
-                Author = dto.Author,
-                CreatedAt = dto.CreatedAt,
-                UpdatedAt = dto.UpdatedAt,
-                IsPublished = dto.IsPublished,
-                Tags = dto.Tags,
-                SeoMetadata = new SeoMetadata(), // Will be populated by SEO service
-                Analytics = new ContentAnalytics() // Will be populated by analytics service
-            };
-        }
-
-        private string GenerateRssFeed(List<BlogPost> posts)
-        {
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var rss = $@"<?xml version=""1.0"" encoding=""UTF-8""?>
-<rss version=""2.0"" xmlns:atom=""http://www.w3.org/2005/Atom"">
-<channel>
-<title>BloggingAgent Blog</title>
-<description>AI-powered blog content</description>
-<link>{baseUrl}</link>
-<atom:link href=""{baseUrl}/blog/rss"" rel=""self"" type=""application/rss+xml"" />
-<language>en-us</language>
-<lastBuildDate>{DateTime.UtcNow:R}</lastBuildDate>
-";
-
-            foreach (var post in posts)
-            {
-                var excerpt = post.Excerpt ?? post.Content.Substring(0, Math.Min(200, post.Content.Length));
-                rss += $@"
-<item>
-<title><![CDATA[{post.Title}]]></title>
-<description><![CDATA[{excerpt}]]></description>
-<link>{baseUrl}/blog/{post.Slug}</link>
-<guid>{baseUrl}/blog/{post.Slug}</guid>
-<pubDate>{post.CreatedAt:R}</pubDate>
-<author>{post.Author}</author>
-</item>";
-            }
-
-            rss += "\n</channel>\n</rss>";
-            return rss;
-        }
-
-        private string GenerateSitemap(List<BlogPost> posts)
-        {
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var sitemap = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<urlset xmlns=""http://www.sitemaps.org/schemas/sitemap/0.9"">
-";
-
-            // Add main pages
-            sitemap += $@"
-<url>
-<loc>{baseUrl}/</loc>
-<priority>1.0</priority>
-<changefreq>daily</changefreq>
-</url>
-<url>
-<loc>{baseUrl}/blog</loc>
-<priority>0.9</priority>
-<changefreq>daily</changefreq>
-</url>";
-
-            foreach (var post in posts)
-            {
-                sitemap += $@"
-<url>
-<loc>{baseUrl}/blog/{post.Slug}</loc>
-<priority>0.8</priority>
-<changefreq>weekly</changefreq>
-<lastmod>{post.UpdatedAt:yyyy-MM-dd}</lastmod>
-</url>";
-            }
-
-            sitemap += "\n</urlset>";
-            return sitemap;
-        }
+        
     }
 }

@@ -5,6 +5,7 @@ using BloggingAgent.Configurations;
 using BloggingAgent.Models.Domain;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -63,15 +64,8 @@ try
     var app = builder.Build();
 
     // Configure the HTTP request pipeline
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseDeveloperExceptionPage();
-        app.UseMigrationsEndPoint();
-    }
-    else
-    {
-        app.UseExceptionHandler("/Home/Error");
-    }
+    app.UseExceptionHandler("/Home/Error");
+    app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
 
     // Do NOT use HTTPS redirection in hosted environments
     // app.UseHttpsRedirection();
@@ -105,49 +99,68 @@ try
                 var context = services.GetRequiredService<ApplicationDbContext>();
                 var seeder = services.GetRequiredService<BloggingAgent.Data.DatabaseSeeder>();
 
-                logger.LogInformation("Ensuring database exists and is up to date");
-                
-                // Apply migrations instead of EnsureCreated
-                var migrateTask = context.Database.MigrateAsync();
-                if (!migrateTask.Wait(TimeSpan.FromSeconds(30)))
-                {
-                    logger.LogError("Database migration timed out after 30 seconds");
-                }
-                else
-                {
-                    logger.LogInformation("Database migrations applied successfully");
-                }
+                        var dbConnection = context.Database.GetDbConnection();
+                        logger.LogInformation("Database target: {DataSource} / {Database}", dbConnection.DataSource, dbConnection.Database);
 
-                logger.LogInformation("Seeding database with initial data");
-                var seedTask = seeder.SeedAsync();
-                if (!seedTask.Wait(TimeSpan.FromSeconds(60)))
-                {
-                    logger.LogError("Database seeding timed out after 60 seconds");
-                }
-                else
-                {
-                    logger.LogInformation("Database seeding completed successfully");
+                        bool canConnect = false;
+                        try
+                        {
+                            canConnect = context.Database.CanConnect();
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Unable to verify database connectivity for {Database}. Verify the connection string and remote database availability.", dbConnection.Database);
+                        }
+
+                        if (!canConnect)
+                        {
+                            logger.LogError("Database connection failed for '{Database}'. Ensure the target database exists and the configured user has access. " +
+                                "If the remote server does not allow CREATE DATABASE, create the database manually and then re-run the application.", dbConnection.Database);
+                        }
+                        else
+                        {
+                            logger.LogInformation("Ensuring database is up to date");
+                            var migrateTask = context.Database.MigrateAsync();
+                            if (!migrateTask.Wait(TimeSpan.FromSeconds(30)))
+                            {
+                                logger.LogError("Database migration timed out after 30 seconds");
+                            }
+                            else
+                            {
+                                logger.LogInformation("Database migrations applied successfully");
+                            }
+
+                            logger.LogInformation("Seeding database with initial data");
+                            var seedTask = seeder.SeedAsync();
+                            if (!seedTask.Wait(TimeSpan.FromSeconds(60)))
+                            {
+                                logger.LogError("Database seeding timed out after 60 seconds");
+                            }
+                            else
+                            {
+                                logger.LogInformation("Database seeding completed successfully");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "An error occurred while initializing the database. Application will continue running.");
+                        // Don't throw - allow app to run even if seeding fails
+                    }
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An error occurred while initializing the database. Application will continue running.");
-                // Don't throw - allow app to run even if seeding fails
+                var initLogger = app.Services.GetRequiredService<ILogger<Program>>();
+                initLogger.LogError(ex, "Critical error during database initialization scope");
+                // Continue anyway - don't crash the application
             }
-        }
-    }
-    catch (Exception ex)
-    {
-        var initLogger = app.Services.GetRequiredService<ILogger<Program>>();
-        initLogger.LogError(ex, "Critical error during database initialization scope");
-        // Continue anyway - don't crash the application
-    }
 
-    app.Run();
-}
-catch (Exception ex)
-{
-    Console.Error.WriteLine($"Fatal error during application startup: {ex}");
-    System.Diagnostics.Debugger.Break();
-    throw;
-}
+            app.Run();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Fatal error during application startup: {ex}");
+            System.Diagnostics.Debugger.Break();
+            throw;
+        }

@@ -6,6 +6,8 @@ using BloggingAgent.Services.Email;
 using BloggingAgent.Services.LLM;
 using BloggingAgent.Services.Memory;
 using BloggingAgent.Services.SEO;
+using AutoMapper;
+using BloggingAgent.Services.Mapping.Profiles;
 using BloggingAgent.Services.SocialMedia;
 using BloggingAgent.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,8 +30,14 @@ namespace BloggingAgent.Extensions
             services.AddScoped<ICacheService, MemoryCacheService>();
             services.AddScoped<IEmailService, SmtpEmailService>();
             services.AddScoped<ISocialMediaService, SocialMediaService>();
-            services.AddScoped<MemoryAnalyzer>();
-            services.AddScoped<SeoAnalyzer>();
+            services.AddScoped<IMemoryAnalyzer, MemoryAnalyzer>();
+            services.AddScoped<ISeoAnalyzer, SeoAnalyzer>();
+            // HttpContext accessor for services that need request info (e.g., syndication)
+            services.AddHttpContextAccessor();
+            services.AddScoped<ISyndicationService, SyndicationService>();
+
+            // AutoMapper profiles
+            services.AddAutoMapper(typeof(BlogProfile).Assembly);
 
             // Register LLM Providers
             services.AddScoped<ILlmProvider, OpenAIProvider>();

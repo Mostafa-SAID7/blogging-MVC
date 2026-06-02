@@ -27,31 +27,8 @@ namespace BloggingAgent.Middleware
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An unhandled exception occurred.");
-                await HandleExceptionAsync(context, ex);
+                throw;
             }
-        }
-
-        private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
-        {
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-
-            var errorResponse = new
-            {
-                error = new
-                {
-                    message = "An internal server error occurred.",
-                    details = exception.Message,
-                    timestamp = DateTime.UtcNow
-                }
-            };
-
-            var json = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
-            await context.Response.WriteAsync(json);
         }
     }
 }

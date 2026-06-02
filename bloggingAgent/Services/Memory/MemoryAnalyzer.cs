@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BloggingAgent.Services.Memory
 {
-    public class MemoryAnalyzer
+    public class MemoryAnalyzer : IMemoryAnalyzer
     {
         private readonly IMemoryService _memoryService;
         private readonly ILogger<MemoryAnalyzer> _logger;

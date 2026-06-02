@@ -46,7 +46,7 @@ namespace BloggingAgent.Data.EntityConfigurations
             entity.HasOne(e => e.Analytics)
                   .WithOne()
                   .HasForeignKey<ContentAnalytics>(e => e.BlogPostId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                  .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasOne<ApplicationUser>()
                   .WithMany(u => u.BlogPosts)
