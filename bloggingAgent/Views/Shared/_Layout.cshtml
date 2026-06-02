@@ -48,6 +48,13 @@
 
                 <!-- Right Side Navigation -->
                 <ul class="navbar-nav">
+                    <!-- Settings/Preferences Button -->
+                    <li class="nav-item me-2">
+                        <button class="nav-link btn btn-link" id="preferencesToggleBtn" title="Open preferences">
+                            <i class="fas fa-sliders-h"></i>
+                        </button>
+                    </li>
+
                     <!-- Notifications Icon -->
                     @if (User.Identity.IsAuthenticated)
                     {
@@ -122,7 +129,29 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Storage Manager Module -->
+    <script src="~/js/modules/storage-manager.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <!-- Preferences Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const preferencesToggleBtn = document.getElementById('preferencesToggleBtn');
+            if (preferencesToggleBtn && window.UserPreferencesManager) {
+                preferencesToggleBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    UserPreferencesManager.openPanel();
+                });
+            }
+        });
+    </script>
+    
+    <!-- Cookie Consent Notice -->
+    @await Html.PartialAsync("_CookieNotice")
+    
+    <!-- User Preferences Panel -->
+    @await Html.PartialAsync("_UserPreferences")
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

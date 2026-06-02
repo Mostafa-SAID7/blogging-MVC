@@ -1,0 +1,441 @@
+@{
+    // User preferences partial view
+    // Manages user preferences storage and retrieval from localStorage
+}
+
+<!-- User Preferences Management -->
+<div id="userPreferencesContainer" class="user-preferences-container" style="display: none;">
+    <div class="preferences-panel">
+        <div class="preferences-header">
+            <h5>Your Preferences</h5>
+            <button type="button" class="btn-close" id="closePreferences" aria-label="Close preferences"></button>
+        </div>
+
+        <div class="preferences-content">
+            <!-- Theme Preference -->
+            <div class="preference-group">
+                <label for="themeSelect" class="preference-label">Theme</label>
+                <select id="themeSelect" class="form-select form-select-sm">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="auto">Auto (System)</option>
+                </select>
+                <small class="preference-hint">Choose your preferred color theme</small>
+            </div>
+
+            <!-- Language Preference -->
+            <div class="preference-group">
+                <label for="languageSelect" class="preference-label">Language</label>
+                <select id="languageSelect" class="form-select form-select-sm">
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="it">Italian</option>
+                </select>
+                <small class="preference-hint">Select your preferred language</small>
+            </div>
+
+            <!-- Font Size Preference -->
+            <div class="preference-group">
+                <label for="fontSizeSelect" class="preference-label">Font Size</label>
+                <select id="fontSizeSelect" class="form-select form-select-sm">
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                    <option value="xlarge">Extra Large</option>
+                </select>
+                <small class="preference-hint">Adjust text size for better readability</small>
+            </div>
+
+            <!-- Notification Preferences -->
+            <div class="preference-group">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                    <label class="form-check-label" for="emailNotifications">
+                        Email Notifications
+                    </label>
+                </div>
+                <small class="preference-hint">Receive important updates via email</small>
+            </div>
+
+            <!-- Data Retention -->
+            <div class="preference-group">
+                <label for="dataRetention" class="preference-label">Remember My Settings</label>
+                <select id="dataRetention" class="form-select form-select-sm">
+                    <option value="session">This Session Only</option>
+                    <option value="30days" selected>30 Days</option>
+                    <option value="90days">90 Days</option>
+                    <option value="forever">Forever</option>
+                </select>
+                <small class="preference-hint">How long to keep your preferences</small>
+            </div>
+
+            <!-- Sync Preferences -->
+            <div class="preference-group">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="syncPreferences" checked>
+                    <label class="form-check-label" for="syncPreferences">
+                        Sync Across Devices
+                    </label>
+                </div>
+                <small class="preference-hint">Keep preferences consistent on all your devices</small>
+            </div>
+
+            <!-- Clear Preferences -->
+            <div class="preference-group border-top pt-3 mt-3">
+                <button type="button" id="clearPreferencesBtn" class="btn btn-sm btn-outline-danger w-100">
+                    Clear All Preferences
+                </button>
+                <small class="preference-hint text-danger">This will reset all your saved preferences</small>
+            </div>
+        </div>
+
+        <div class="preferences-footer">
+            <button type="button" id="savePreferencesBtn" class="btn btn-sm btn-primary">
+                Save Preferences
+            </button>
+            <button type="button" id="cancelPreferencesBtn" class="btn btn-sm btn-secondary">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .user-preferences-container {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .preferences-panel {
+        background: white;
+        width: 100%;
+        max-width: 400px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+        animation: slideInRight 0.3s ease-out;
+    }
+
+    @@keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+
+    .preferences-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .preferences-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .btn-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-close:hover {
+        color: #333;
+    }
+
+    .preferences-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .preference-group {
+        margin-bottom: 20px;
+    }
+
+    .preference-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+        font-size: 14px;
+    }
+
+    .form-select-sm {
+        font-size: 14px;
+        height: 36px;
+    }
+
+    .preference-hint {
+        display: block;
+        margin-top: 4px;
+        color: #666;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .form-check {
+        margin-bottom: 0;
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .form-check-label {
+        cursor: pointer;
+        user-select: none;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .preferences-footer {
+        display: flex;
+        gap: 10px;
+        padding: 20px;
+        border-top: 1px solid #e0e0e0;
+        background: #f8f9fa;
+    }
+
+    .preferences-footer .btn {
+        flex: 1;
+        font-size: 14px;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .preferences-panel {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .preferences-content {
+            padding: 15px;
+        }
+
+        .preferences-header {
+            padding: 15px;
+        }
+
+        .preferences-footer {
+            padding: 15px;
+        }
+    }
+</style>
+
+<script>
+    // User Preferences Manager
+    window.UserPreferencesManager = (function() {
+        const DEFAULT_PREFERENCES = {
+            theme: 'light',
+            language: 'en',
+            fontSize: 'medium',
+            emailNotifications: true,
+            dataRetention: '30days',
+            syncPreferences: true,
+            lastUpdated: null
+        };
+
+        return {
+            init: function() {
+                this._loadPreferences();
+                this._setupEventListeners();
+                this._applyPreferences();
+            },
+
+            _loadPreferences: function() {
+                const stored = StorageManager && StorageManager.getUserPreferences();
+                window.currentPreferences = { ...DEFAULT_PREFERENCES, ...stored };
+            },
+
+            _setupEventListeners: function() {
+                const themeSelect = document.getElementById('themeSelect');
+                const languageSelect = document.getElementById('languageSelect');
+                const fontSizeSelect = document.getElementById('fontSizeSelect');
+                const emailNotif = document.getElementById('emailNotifications');
+                const dataRetention = document.getElementById('dataRetention');
+                const syncPrefs = document.getElementById('syncPreferences');
+                const saveBtn = document.getElementById('savePreferencesBtn');
+                const cancelBtn = document.getElementById('cancelPreferencesBtn');
+                const clearBtn = document.getElementById('clearPreferencesBtn');
+                const closeBtn = document.getElementById('closePreferences');
+                const container = document.getElementById('userPreferencesContainer');
+
+                // Update form with stored preferences
+                if (window.currentPreferences) {
+                    if (themeSelect) themeSelect.value = window.currentPreferences.theme;
+                    if (languageSelect) languageSelect.value = window.currentPreferences.language;
+                    if (fontSizeSelect) fontSizeSelect.value = window.currentPreferences.fontSize;
+                    if (emailNotif) emailNotif.checked = window.currentPreferences.emailNotifications;
+                    if (dataRetention) dataRetention.value = window.currentPreferences.dataRetention;
+                    if (syncPrefs) syncPrefs.checked = window.currentPreferences.syncPreferences;
+                }
+
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', () => this._savePreferences());
+                }
+
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => this._closePanel());
+                }
+
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', () => this._clearPreferences());
+                }
+
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => this._closePanel());
+                }
+
+                if (container) {
+                    container.addEventListener('click', (e) => {
+                        if (e.target === container) {
+                            this._closePanel();
+                        }
+                    });
+                }
+            },
+
+            _applyPreferences: function() {
+                if (!window.currentPreferences) return;
+
+                // Apply theme
+                const theme = window.currentPreferences.theme;
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                } else if (theme === 'light') {
+                    document.documentElement.removeAttribute('data-theme');
+                }
+
+                // Apply font size
+                const fontSize = window.currentPreferences.fontSize;
+                const fontSizeMap = {
+                    'small': '12px',
+                    'medium': '14px',
+                    'large': '16px',
+                    'xlarge': '18px'
+                };
+
+                if (fontSizeMap[fontSize]) {
+                    document.documentElement.style.fontSize = fontSizeMap[fontSize];
+                }
+
+                // Fire event
+                window.dispatchEvent(new CustomEvent('preferencesApplied', {
+                    detail: window.currentPreferences
+                }));
+            },
+
+            _savePreferences: function() {
+                const themeSelect = document.getElementById('themeSelect');
+                const languageSelect = document.getElementById('languageSelect');
+                const fontSizeSelect = document.getElementById('fontSizeSelect');
+                const emailNotif = document.getElementById('emailNotifications');
+                const dataRetention = document.getElementById('dataRetention');
+                const syncPrefs = document.getElementById('syncPreferences');
+
+                const preferences = {
+                    theme: themeSelect?.value || 'light',
+                    language: languageSelect?.value || 'en',
+                    fontSize: fontSizeSelect?.value || 'medium',
+                    emailNotifications: emailNotif?.checked || true,
+                    dataRetention: dataRetention?.value || '30days',
+                    syncPreferences: syncPrefs?.checked || true,
+                    lastUpdated: new Date().toISOString()
+                };
+
+                if (StorageManager) {
+                    StorageManager.setUserPreferences(preferences);
+                }
+
+                window.currentPreferences = preferences;
+                this._applyPreferences();
+                this._closePanel();
+
+                // Show success message
+                console.log('Preferences saved successfully');
+                window.dispatchEvent(new CustomEvent('preferencesSaved', {
+                    detail: preferences
+                }));
+            },
+
+            _clearPreferences: function() {
+                if (confirm('Are you sure you want to clear all your preferences? This cannot be undone.')) {
+                    if (StorageManager) {
+                        StorageManager.remove('userPreferences', { type: StorageManager.TYPES.LOCAL });
+                    }
+
+                    window.currentPreferences = DEFAULT_PREFERENCES;
+                    this._loadPreferences();
+                    this._setupEventListeners();
+                    this._applyPreferences();
+
+                    console.log('Preferences cleared');
+                    window.dispatchEvent(new CustomEvent('preferencesCleared'));
+                }
+            },
+
+            _closePanel: function() {
+                const container = document.getElementById('userPreferencesContainer');
+                if (container) {
+                    container.style.display = 'none';
+                }
+            },
+
+            openPanel: function() {
+                const container = document.getElementById('userPreferencesContainer');
+                if (container) {
+                    container.style.display = 'flex';
+                }
+            },
+
+            getPreferences: function() {
+                return window.currentPreferences || DEFAULT_PREFERENCES;
+            }
+        };
+    })();
+
+    // Auto-initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => UserPreferencesManager.init());
+    } else {
+        UserPreferencesManager.init();
+    }
+</script>
