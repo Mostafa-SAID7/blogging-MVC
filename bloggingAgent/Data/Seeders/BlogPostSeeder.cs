@@ -73,6 +73,8 @@ namespace BloggingAgent.Data.Seeders
                 {
                     Title = "Getting Started with AI-Powered Blogging",
                     Slug = "getting-started-ai-blogging",
+                    Author = "Demo Author",
+                    AuthorId = authorId,
                     Content = @"# Getting Started with AI-Powered Blogging
 
 Artificial Intelligence has revolutionized the way we create content. With AI-powered blogging platforms like BloggingAgent, you can generate high-quality blog posts in minutes instead of hours.
@@ -103,7 +105,6 @@ The future of blogging is AI-assisted, not AI-replaced. AI will handle the heavy
 
 Start your AI blogging journey today with BloggingAgent!",
                     Excerpt = "Discover how AI-powered blogging can transform your content creation process and help you reach your audience more effectively.",
-                    AuthorId = authorId,
                     CreatedAt = DateTime.UtcNow.AddDays(-7),
                     UpdatedAt = DateTime.UtcNow.AddDays(-7),
                     IsPublished = true,
@@ -130,6 +131,8 @@ Start your AI blogging journey today with BloggingAgent!",
                 {
                     Title = "The Rise of Machine Learning in Modern Applications",
                     Slug = "rise-machine-learning-modern-applications",
+                    Author = "Demo Author",
+                    AuthorId = authorId,
                     Content = @"# The Rise of Machine Learning in Modern Applications
 
 Machine Learning (ML) has become an integral part of modern software applications. From recommendation systems to autonomous vehicles, ML algorithms are powering innovations across industries.
@@ -175,7 +178,6 @@ If you're interested in machine learning:
 
 Machine Learning is transforming how we build software and solve problems. The possibilities are endless!",
                     Excerpt = "Explore how machine learning is revolutionizing modern applications across industries and what the future holds for this transformative technology.",
-                    AuthorId = authorId,
                     CreatedAt = DateTime.UtcNow.AddDays(-5),
                     UpdatedAt = DateTime.UtcNow.AddDays(-5),
                     IsPublished = true,
@@ -202,6 +204,8 @@ Machine Learning is transforming how we build software and solve problems. The p
                 {
                     Title = "SEO Best Practices for 2024",
                     Slug = "seo-best-practices-2024",
+                    Author = "Demo Author",
+                    AuthorId = authorId,
                     Content = @"# SEO Best Practices for 2024
 
 Search Engine Optimization continues to evolve as search engines become more sophisticated. Staying updated with the latest SEO practices is crucial for online visibility.
@@ -291,7 +295,6 @@ SEO will continue to evolve with:
 
 Stay updated with SEO best practices and continuously optimize your content for better search visibility!",
                     Excerpt = "Master the latest SEO strategies for 2024. Learn technical SEO, content optimization, and emerging trends that will boost your search rankings.",
-                    AuthorId = authorId,
                     CreatedAt = DateTime.UtcNow.AddDays(-3),
                     UpdatedAt = DateTime.UtcNow.AddDays(-3),
                     IsPublished = true,

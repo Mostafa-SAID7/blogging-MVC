@@ -23,7 +23,7 @@ namespace BloggingAgent.Data.EntityConfigurations
 
             // Relationships
             entity.HasOne(e => e.BlogPost)
-                  .WithMany()
+                  .WithMany(b => b.Comments)
                   .HasForeignKey(e => e.BlogPostId)
                   .OnDelete(DeleteBehavior.Cascade);
 
