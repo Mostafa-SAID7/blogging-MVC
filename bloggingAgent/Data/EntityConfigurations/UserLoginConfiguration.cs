@@ -9,10 +9,17 @@ namespace BloggingAgent.Data.EntityConfigurations
         public void Configure(EntityTypeBuilder<UserLogin> entity)
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWID()");
+            
             entity.Property(e => e.Provider).IsRequired().HasMaxLength(50);
             entity.Property(e => e.ProviderKey).IsRequired().HasMaxLength(500);
             entity.Property(e => e.ProviderDisplayName).HasMaxLength(200);
+            
+            // Soft delete filter
+            entity.HasQueryFilter(e => !e.IsDeleted);
+            
             entity.HasIndex(e => new { e.UserId, e.Provider });
+            entity.HasIndex(e => e.IsDeleted);
 
             entity.HasOne(e => e.User)
                   .WithMany(u => u.ExternalLogins)

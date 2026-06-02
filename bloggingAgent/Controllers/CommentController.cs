@@ -34,7 +34,7 @@ namespace BloggingAgent.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetComments(int postId, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> GetComments(Guid postId, int page = 1, int pageSize = 10)
         {
             var cacheKey = $"comments_{postId}_{page}_{pageSize}";
             var cachedComments = await _cacheService.GetAsync<List<CommentDto>>(cacheKey);
@@ -87,7 +87,6 @@ namespace BloggingAgent.Controllers
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
                 UserAgent = Request.Headers["User-Agent"].ToString(),
                 IsApproved = true, // Auto-approve for authenticated users
-                CreatedAt = DateTime.UtcNow
             };
 
             await _commentRepository.AddAsync(comment);
@@ -119,7 +118,7 @@ namespace BloggingAgent.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> LikeComment(int commentId, bool isLike)
+        public async Task<IActionResult> LikeComment(Guid commentId, bool isLike)
         {
             var user = await _userManager.GetUserAsync(User);
             var comment = await _commentRepository.GetByIdAsync(commentId);
@@ -153,7 +152,7 @@ namespace BloggingAgent.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> RemoveCommentLike(int commentId)
+        public async Task<IActionResult> RemoveCommentLike(Guid commentId)
         {
             var user = await _userManager.GetUserAsync(User);
             var comment = await _commentRepository.GetByIdAsync(commentId);
@@ -179,7 +178,7 @@ namespace BloggingAgent.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Moderator,Admin")]
-        public async Task<IActionResult> ModerateComment(int commentId, string action, string reason = null)
+        public async Task<IActionResult> ModerateComment(Guid commentId, string action, string reason = null)
         {
             var user = await _userManager.GetUserAsync(User);
             var comment = await _commentRepository.GetByIdAsync(commentId);
@@ -217,7 +216,7 @@ namespace BloggingAgent.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> EditComment(int commentId, [FromBody] string content)
+        public async Task<IActionResult> EditComment(Guid commentId, [FromBody] string content)
         {
             var user = await _userManager.GetUserAsync(User);
             var comment = await _commentRepository.GetByIdAsync(commentId);
@@ -228,7 +227,7 @@ namespace BloggingAgent.Controllers
             }
 
             comment.Content = content;
-            comment.UpdatedAt = DateTime.UtcNow;
+            comment.MarkAsModified();
 
             await _commentRepository.UpdateAsync(comment);
 
@@ -240,7 +239,7 @@ namespace BloggingAgent.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> DeleteComment(int commentId)
+        public async Task<IActionResult> DeleteComment(Guid commentId)
         {
             var user = await _userManager.GetUserAsync(User);
             var comment = await _commentRepository.GetByIdAsync(commentId);
@@ -277,7 +276,7 @@ namespace BloggingAgent.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> CommentStats(int postId)
+        public async Task<IActionResult> CommentStats(Guid postId)
         {
             var cacheKey = $"comment_stats_{postId}";
             var cachedStats = await _cacheService.GetAsync<CommentStatsDto>(cacheKey);
@@ -338,7 +337,7 @@ namespace BloggingAgent.Controllers
             return dto;
         }
 
-        private async Task ClearCommentCache(int postId)
+        private async Task ClearCommentCache(Guid postId)
         {
             // Clear all comment-related caches for this post
             await _cacheService.RemoveAsync($"comments_{postId}_*");

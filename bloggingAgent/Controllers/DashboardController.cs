@@ -127,7 +127,7 @@ namespace BloggingAgent.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> QuickPublish(int postId)
+        public async Task<IActionResult> QuickPublish(Guid postId)
         {
             var user = await _userManager.GetUserAsync(User);
             var post = await _blogPostRepository.GetByIdAsync(postId);
@@ -138,7 +138,7 @@ namespace BloggingAgent.Controllers
             }
 
             post.IsPublished = true;
-            post.UpdatedAt = DateTime.UtcNow;
+            post.MarkAsModified();
             await _blogPostRepository.UpdateAsync(post);
 
             // Clear caches
@@ -149,7 +149,7 @@ namespace BloggingAgent.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> QuickUnpublish(int postId)
+        public async Task<IActionResult> QuickUnpublish(Guid postId)
         {
             var user = await _userManager.GetUserAsync(User);
             var post = await _blogPostRepository.GetByIdAsync(postId);
@@ -160,7 +160,7 @@ namespace BloggingAgent.Controllers
             }
 
             post.IsPublished = false;
-            post.UpdatedAt = DateTime.UtcNow;
+            post.MarkAsModified();
             await _blogPostRepository.UpdateAsync(post);
 
             // Clear caches
@@ -247,12 +247,12 @@ namespace BloggingAgent.Controllers
                           .ToList();
         }
 
-        private async Task<Dictionary<string, int>> GetContentAnalyticsAsync(string userId)
+        private async Task<Dictionary<string, object>> GetContentAnalyticsAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
             var posts = await _blogPostRepository.FindAsync(p => p.Author == user.UserName);
 
-            return new Dictionary<string, int>
+            return new Dictionary<string, object>
             {
                 ["TotalViews"] = posts.Where(p => p.Analytics != null).Sum(p => p.Analytics.Views),
                 ["TotalComments"] = await GetTotalCommentsForUserAsync(userId),

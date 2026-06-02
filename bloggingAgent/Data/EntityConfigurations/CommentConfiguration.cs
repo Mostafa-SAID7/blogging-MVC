@@ -9,11 +9,18 @@ namespace BloggingAgent.Data.EntityConfigurations
         public void Configure(EntityTypeBuilder<Comment> entity)
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWID()");
+            
             entity.Property(e => e.Content).IsRequired();
             entity.Property(e => e.IpAddress).HasMaxLength(45);
             entity.Property(e => e.UserAgent).HasMaxLength(500);
+            
+            // Soft delete filter
+            entity.HasQueryFilter(e => !e.IsDeleted);
+            
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => new { e.BlogPostId, e.IsApproved, e.IsSpam });
+            entity.HasIndex(e => e.IsDeleted);
 
             // Self-referencing relationship for nested comments
             entity.HasOne(e => e.ParentComment)

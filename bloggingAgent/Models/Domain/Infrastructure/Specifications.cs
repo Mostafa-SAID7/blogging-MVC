@@ -7,7 +7,7 @@ namespace BloggingAgent.Models.Domain.Infrastructure
     // BlogPost Specifications
     public class BlogPostByIdSpec : Specification<BlogPost>
     {
-        public BlogPostByIdSpec(int id)
+        public BlogPostByIdSpec(Guid id)
         {
             SetCriteria(x => x.Id == id);
             AddInclude(x => x.SeoMetadata);
@@ -128,7 +128,7 @@ namespace BloggingAgent.Models.Domain.Infrastructure
     // Comment Specifications
     public class CommentsByBlogPostSpec : Specification<Comment>
     {
-        public CommentsByBlogPostSpec(int blogPostId, bool approvedOnly = true)
+        public CommentsByBlogPostSpec(Guid blogPostId, bool approvedOnly = true)
         {
             var criteria = approvedOnly
                 ? (Expression<Func<Comment, bool>>)(x => x.BlogPostId == blogPostId && x.Status == CommentStatus.Approved)
@@ -205,7 +205,7 @@ namespace BloggingAgent.Models.Domain.Infrastructure
     // Analytics Specifications
     public class AnalyticsByBlogPostSpec : Specification<ContentAnalytics>
     {
-        public AnalyticsByBlogPostSpec(int blogPostId)
+        public AnalyticsByBlogPostSpec(Guid blogPostId)
         {
             SetCriteria(x => x.BlogPostId == blogPostId);
         }
@@ -216,7 +216,7 @@ namespace BloggingAgent.Models.Domain.Infrastructure
         public TopViewedPostsSpec(int days = 30, int count = 10)
         {
             var sinceDate = DateTime.UtcNow.AddDays(-days);
-            SetCriteria(x => x.LastUpdated >= sinceDate);
+            SetCriteria(x => x.UpdatedAt >= sinceDate);
             ApplyOrderByDescending(x => x.Views);
             ApplyPaging(0, count);
 
@@ -228,7 +228,7 @@ namespace BloggingAgent.Models.Domain.Infrastructure
     {
         public AnalyticsSummarySpec(DateTime startDate, DateTime endDate)
         {
-            SetCriteria(x => x.LastUpdated >= startDate && x.LastUpdated <= endDate);
+            SetCriteria(x => x.UpdatedAt >= startDate && x.UpdatedAt <= endDate);
             AddInclude(x => x.BlogPost);
         }
     }
@@ -253,7 +253,7 @@ namespace BloggingAgent.Models.Domain.Infrastructure
 
     public class RelatedBlogPostsSpec : Specification<BlogPost>
     {
-        public RelatedBlogPostsSpec(int blogPostId, BlogCategory category, string[] tags, int count = 5)
+        public RelatedBlogPostsSpec(Guid blogPostId, BlogCategory category, string[] tags, int count = 5)
         {
             SetCriteria(x => x.Id != blogPostId &&
                            x.Status == PostStatus.Published &&

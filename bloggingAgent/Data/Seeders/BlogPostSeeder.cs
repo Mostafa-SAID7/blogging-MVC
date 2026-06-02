@@ -117,7 +117,7 @@ Start your AI blogging journey today with BloggingAgent!",
                         Comments = 12,
                         AverageReadTime = 4.5,
                         BounceRate = 0.25,
-                        LastUpdated = DateTime.UtcNow
+                        UpdatedAt = DateTime.UtcNow
                     }
                 },
                 new BlogPost
@@ -190,7 +190,7 @@ Machine Learning is transforming how we build software and solve problems. The p
                         Comments = 8,
                         AverageReadTime = 6.2,
                         BounceRate = 0.30,
-                        LastUpdated = DateTime.UtcNow
+                        UpdatedAt = DateTime.UtcNow
                     }
                 },
                 new BlogPost
@@ -307,7 +307,7 @@ Stay updated with SEO best practices and continuously optimize your content for 
                         Comments = 23,
                         AverageReadTime = 8.7,
                         BounceRate = 0.20,
-                        LastUpdated = DateTime.UtcNow
+                        UpdatedAt = DateTime.UtcNow
                     }
                 }
             };

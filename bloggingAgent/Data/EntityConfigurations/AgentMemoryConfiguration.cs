@@ -9,9 +9,15 @@ namespace BloggingAgent.Data.EntityConfigurations
         public void Configure(EntityTypeBuilder<AgentMemory> entity)
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWID()");
+            
             entity.Property(e => e.Key).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Value).IsRequired();
             entity.Property(e => e.Category).HasMaxLength(50);
+            
+            // Soft delete filter
+            entity.HasQueryFilter(e => !e.IsDeleted);
+            
             entity.Property(e => e.Metadata)
                 .HasConversion(
                     v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions)null),
@@ -25,6 +31,7 @@ namespace BloggingAgent.Data.EntityConfigurations
             entity.HasIndex(e => e.Key);
             entity.HasIndex(e => new { e.Key, e.Category });
             entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => e.IsDeleted);
         }
     }
 }

@@ -9,14 +9,21 @@ namespace BloggingAgent.Data.EntityConfigurations
         public void Configure(EntityTypeBuilder<BlogPost> entity)
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWID()");
+            
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Slug).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Author).HasMaxLength(100);
             entity.Property(e => e.Content).IsRequired();
             entity.Property(e => e.Excerpt).HasMaxLength(500);
+            
+            // Soft delete filter - exclude deleted posts by default
+            entity.HasQueryFilter(e => !e.IsDeleted);
+            
             entity.HasIndex(e => e.Slug).IsUnique();
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.IsDeleted);
 
             // Configure Tags as JSON with simple value comparer
             entity.Property(e => e.Tags)

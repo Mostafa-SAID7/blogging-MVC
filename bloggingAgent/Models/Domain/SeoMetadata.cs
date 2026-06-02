@@ -1,11 +1,11 @@
+using System;
 using System.Collections.Generic;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class SeoMetadata
+    public class SeoMetadata : BaseEntity
     {
-        public int Id { get; set; }
-        public int BlogPostId { get; set; }
+        public Guid BlogPostId { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         public string Keywords { get; set; }

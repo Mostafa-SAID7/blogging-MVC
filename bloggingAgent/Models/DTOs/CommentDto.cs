@@ -5,8 +5,8 @@ namespace BloggingAgent.Models.DTOs
 {
     public class CommentDto
     {
-        public int Id { get; set; }
-        public int BlogPostId { get; set; }
+        public Guid Id { get; set; }
+        public Guid BlogPostId { get; set; }
         public string AuthorId { get; set; }
         public string AuthorName { get; set; }
         public string Content { get; set; }
@@ -20,15 +20,15 @@ namespace BloggingAgent.Models.DTOs
         public bool CanDelete { get; set; }
         public int Depth { get; set; }
         public bool IsReply { get; set; }
-        public int? ParentCommentId { get; set; }
+        public Guid? ParentCommentId { get; set; }
         public List<CommentDto> Replies { get; set; } = new List<CommentDto>();
     }
 
     public class CreateCommentRequest
     {
-        public int BlogPostId { get; set; }
+        public Guid BlogPostId { get; set; }
         public string Content { get; set; }
-        public int? ParentCommentId { get; set; }
+        public Guid? ParentCommentId { get; set; }
     }
 
     public class CommentStatsDto

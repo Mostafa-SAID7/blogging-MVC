@@ -2,12 +2,10 @@ using System;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class CommentLike
+    public class CommentLike : BaseEntity
     {
-        public int Id { get; set; }
-
         // Relationships
-        public int CommentId { get; set; }
+        public Guid CommentId { get; set; }
         public virtual Comment Comment { get; set; }
 
         public string UserId { get; set; }
@@ -15,10 +13,6 @@ namespace BloggingAgent.Models.Domain
 
         // Like/Dislike
         public bool IsLike { get; set; } // true = like, false = dislike
-
-        // Metadata
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
 
         // Computed Properties
         public string DisplayText => IsLike ? "Liked" : "Disliked";

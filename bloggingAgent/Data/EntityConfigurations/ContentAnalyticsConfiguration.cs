@@ -9,12 +9,18 @@ namespace BloggingAgent.Data.EntityConfigurations
         public void Configure(EntityTypeBuilder<ContentAnalytics> entity)
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWID()");
+            
             entity.Property(e => e.BlogPostId).IsRequired();
             // Store doubles as floats in SQL Server (double precision)
             entity.Property(e => e.AverageReadTime).HasColumnType("float");
             entity.Property(e => e.BounceRate).HasColumnType("float");
+            
+            // Soft delete filter
+            entity.HasQueryFilter(e => !e.IsDeleted);
+            
             entity.HasIndex(e => e.BlogPostId).IsUnique();
-            entity.HasIndex(e => e.LastUpdated);
+            entity.HasIndex(e => e.IsDeleted);
 
             // Configure TrafficSources as JSON with simple value comparer
             entity.Property(e => e.TrafficSources)

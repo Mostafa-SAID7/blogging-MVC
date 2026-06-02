@@ -78,7 +78,7 @@ namespace BloggingAgent.Controllers
             // Set plan limits
             SetPlanLimits(subscription, plan.Name);
 
-            if (subscription.Id == 0)
+            if (subscription.Id == default)
             {
                 await _subscriptionRepository.AddAsync(subscription);
             }

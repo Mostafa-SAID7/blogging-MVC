@@ -13,9 +13,9 @@ namespace BloggingAgent.Agents
         Task<string[]> SuggestTagsAsync(string content);
         Task<bool> IsTopicRelevantAsync(string topic);
         Task<BlogPostDto> PublishPostAsync(BlogPostDto post);
-        Task<BlogPostDto> UpdatePostAsync(int postId, BlogPostDto updatedPost);
-        Task<bool> DeletePostAsync(int postId);
-        Task<List<BlogPostDto>> GetRelatedPostsAsync(int postId, int count = 5);
+        Task<BlogPostDto> UpdatePostAsync(Guid postId, BlogPostDto updatedPost);
+        Task<bool> DeletePostAsync(Guid postId);
+        Task<List<BlogPostDto>> GetRelatedPostsAsync(Guid postId, int count = 5);
         Task<Dictionary<string, int>> GetContentAnalyticsAsync();
     }
 }

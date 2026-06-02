@@ -153,8 +153,7 @@ namespace BloggingAgent.Controllers
                 Icon = request.Icon ?? "fas fa-tag",
                 ParentCategoryId = request.ParentCategoryId,
                 DisplayOrder = request.DisplayOrder,
-                IsActive = true,
-                CreatedAt = System.DateTime.UtcNow
+                IsActive = true
             };
 
             await _categoryRepository.AddAsync(category);
@@ -168,7 +167,7 @@ namespace BloggingAgent.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(Guid id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
@@ -193,7 +192,7 @@ namespace BloggingAgent.Controllers
         [HttpPost]
         [Authorize(Roles = "Administrator")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, UpdateCategoryRequest request)
+        public async Task<IActionResult> Edit(Guid id, UpdateCategoryRequest request)
         {
             if (!ModelState.IsValid)
             {
@@ -229,7 +228,7 @@ namespace BloggingAgent.Controllers
             category.ParentCategoryId = request.ParentCategoryId;
             category.DisplayOrder = request.DisplayOrder;
             category.IsActive = request.IsActive;
-            category.UpdatedAt = System.DateTime.UtcNow;
+            category.MarkAsModified();
 
             await _categoryRepository.UpdateAsync(category);
 
@@ -243,7 +242,7 @@ namespace BloggingAgent.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
@@ -270,7 +269,7 @@ namespace BloggingAgent.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> ToggleActive(int id)
+        public async Task<IActionResult> ToggleActive(Guid id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
@@ -279,7 +278,7 @@ namespace BloggingAgent.Controllers
             }
 
             category.IsActive = !category.IsActive;
-            category.UpdatedAt = System.DateTime.UtcNow;
+            category.MarkAsModified();
 
             await _categoryRepository.UpdateAsync(category);
 
@@ -290,7 +289,7 @@ namespace BloggingAgent.Controllers
             return Json(new { success = true, isActive = category.IsActive });
         }
 
-        private async Task<int> GetPostCountForCategoryAsync(int categoryId)
+        private async Task<int> GetPostCountForCategoryAsync(Guid categoryId)
         {
             var category = await _categoryRepository.GetByIdAsync(categoryId);
             if (category == null) return 0;

@@ -2,9 +2,8 @@ using System;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class Subscription
+    public class Subscription : BaseEntity
     {
-        public int Id { get; set; }
         public string UserId { get; set; }
         public virtual ApplicationUser User { get; set; }
 
@@ -37,10 +36,6 @@ namespace BloggingAgent.Models.Domain
         public int AiTokensUsedThisMonth { get; set; } = 0;
         public DateTime UsageResetDate { get; set; }
 
-        // Metadata
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
         // Computed Properties
         public bool IsActive => Status == "active" && CurrentPeriodEnd > DateTime.UtcNow;
         public bool IsTrial => false; // Could be extended for trial periods
@@ -67,19 +62,19 @@ namespace BloggingAgent.Models.Domain
             PostsUsedThisMonth = 0;
             AiTokensUsedThisMonth = 0;
             UsageResetDate = DateTime.UtcNow.AddMonths(1);
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         public void IncrementPostUsage()
         {
             PostsUsedThisMonth++;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         public void IncrementAiUsage(int tokens)
         {
             AiTokensUsedThisMonth += tokens;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
     }
 }

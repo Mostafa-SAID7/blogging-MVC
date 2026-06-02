@@ -249,7 +249,7 @@ namespace BloggingAgent.Agents
             return post;
         }
 
-        public async Task<BlogPostDto> UpdatePostAsync(int postId, BlogPostDto updatedPost)
+        public async Task<BlogPostDto> UpdatePostAsync(Guid postId, BlogPostDto updatedPost)
         {
             var existingPost = await _blogPostRepository.GetByIdAsync(postId);
             if (existingPost == null)
@@ -279,7 +279,7 @@ namespace BloggingAgent.Agents
             return MapToDto(existingPost);
         }
 
-        public async Task<bool> DeletePostAsync(int postId)
+        public async Task<bool> DeletePostAsync(Guid postId)
         {
             var post = await _blogPostRepository.GetByIdAsync(postId);
             if (post == null)
@@ -300,7 +300,7 @@ namespace BloggingAgent.Agents
             return true;
         }
 
-        public async Task<List<BlogPostDto>> GetRelatedPostsAsync(int postId, int count = 5)
+        public async Task<List<BlogPostDto>> GetRelatedPostsAsync(Guid postId, int count = 5)
         {
             var post = await _blogPostRepository.GetByIdAsync(postId);
             if (post == null)

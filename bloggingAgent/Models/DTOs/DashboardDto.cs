@@ -15,7 +15,7 @@ namespace BloggingAgent.Models.DTOs
         public UserStatsDto UserStats { get; set; }
         public List<BlogPostDto> RecentPosts { get; set; } = new List<BlogPostDto>();
         public List<CommentDto> RecentComments { get; set; } = new List<CommentDto>();
-        public Dictionary<string, int> ContentAnalytics { get; set; } = new Dictionary<string, int>();
+        public Dictionary<string, object> ContentAnalytics { get; set; } = new Dictionary<string, object>();
         public List<NotificationDto> RecentNotifications { get; set; } = new List<NotificationDto>();
         public List<QuickAction> QuickActions { get; set; } = new List<QuickAction>();
         public List<UpcomingTask> UpcomingTasks { get; set; } = new List<UpcomingTask>();

@@ -16,14 +16,14 @@ namespace BloggingAgent.Models.DTOs
     {
         public List<SocialMediaPost> Posts { get; set; } = new List<SocialMediaPost>();
         public List<SocialMediaAccount> Accounts { get; set; } = new List<SocialMediaAccount>();
-        public int SelectedAccountId { get; set; }
+        public Guid SelectedAccountId { get; set; }
     }
 
     public class CreateSocialPostViewModel
     {
         public List<SocialMediaAccount> AvailableAccounts { get; set; } = new List<SocialMediaAccount>();
-        public List<int> SelectedAccountIds { get; set; } = new List<int>();
-        public int? BlogPostId { get; set; }
+        public List<Guid> SelectedAccountIds { get; set; } = new List<Guid>();
+        public Guid? BlogPostId { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
         public List<string> Tags { get; set; } = new List<string>();

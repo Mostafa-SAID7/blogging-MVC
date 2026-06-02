@@ -9,8 +9,13 @@ namespace BloggingAgent.Data.EntityConfigurations
         public void Configure(EntityTypeBuilder<AgentSettings> entity)
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWID()");
+            
             entity.Property(e => e.DefaultAuthor).HasMaxLength(100);
             entity.Property(e => e.Theme).HasMaxLength(50);
+
+            // Soft delete filter
+            entity.HasQueryFilter(e => !e.IsDeleted);
 
             entity.Property(e => e.DefaultTags)
                   .HasConversion(
@@ -34,6 +39,8 @@ namespace BloggingAgent.Data.EntityConfigurations
                       c => c.Aggregate(0, (a, kvp) => unchecked(a * 397 ^ kvp.Key.GetHashCode() ^ (kvp.Value != null ? kvp.Value.GetHashCode() : 0))),
                       c => new Dictionary<string, object>(c)
                   ));
+
+            entity.HasIndex(e => e.IsDeleted);
         }
     }
 }

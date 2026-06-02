@@ -9,6 +9,8 @@ namespace BloggingAgent.Data.EntityConfigurations
         public void Configure(EntityTypeBuilder<SeoMetadata> entity)
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWID()");
+            
             entity.Property(e => e.BlogPostId).IsRequired();
             entity.Property(e => e.Title).HasMaxLength(60);
             entity.Property(e => e.Description).HasMaxLength(160);
@@ -18,7 +20,12 @@ namespace BloggingAgent.Data.EntityConfigurations
             entity.Property(e => e.OgDescription).HasMaxLength(160);
             entity.Property(e => e.OgImage).HasMaxLength(500);
             entity.Property(e => e.TwitterCard).HasMaxLength(50);
+            
+            // Soft delete filter
+            entity.HasQueryFilter(e => !e.IsDeleted);
+            
             entity.HasIndex(e => e.BlogPostId).IsUnique();
+            entity.HasIndex(e => e.IsDeleted);
 
             // Configure StructuredData as JSON with simple value comparer
             entity.Property(e => e.StructuredData)

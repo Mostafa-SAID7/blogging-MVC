@@ -2,9 +2,8 @@ using System;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class Payment
+    public class Payment : BaseEntity
     {
-        public int Id { get; set; }
         public string UserId { get; set; }
         public virtual ApplicationUser User { get; set; }
 
@@ -20,7 +19,7 @@ namespace BloggingAgent.Models.Domain
         public string ReceiptEmail { get; set; }
 
         // Subscription Context
-        public int? SubscriptionId { get; set; }
+        public Guid? SubscriptionId { get; set; }
         public virtual Subscription Subscription { get; set; }
         public string PlanName { get; set; }
         public string BillingInterval { get; set; }
@@ -37,7 +36,6 @@ namespace BloggingAgent.Models.Domain
         public DateTime? RefundedAt { get; set; }
 
         // Metadata
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ProcessedAt { get; set; }
         public string FailureReason { get; set; }
         public string Metadata { get; set; } // JSON string for additional data

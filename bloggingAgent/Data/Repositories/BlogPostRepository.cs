@@ -94,7 +94,7 @@ namespace BloggingAgent.Data.Repositories
             return await _dbSet
                 .Include(p => p.SeoMetadata)
                 .Include(p => p.Analytics)
-                .FirstOrDefaultAsync(p => p.Id == (int)id);
+                .FirstOrDefaultAsync(p => p.Id == (Guid)id);
         }
 
         public override async Task<IEnumerable<BlogPost>> GetAllAsync()

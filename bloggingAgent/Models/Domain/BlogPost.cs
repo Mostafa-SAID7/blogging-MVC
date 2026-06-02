@@ -5,9 +5,8 @@ using BloggingAgent.Models.Enums;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class BlogPost
+    public class BlogPost : BaseEntity
     {
-        public int Id { get; set; }
 
         [Required]
         [StringLength(200, MinimumLength = 1)]
@@ -26,9 +25,6 @@ namespace BloggingAgent.Models.Domain
         [Required]
         [StringLength(100)]
         public string Author { get; set; }
-
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
 
         public PostStatus Status { get; set; } = PostStatus.Draft;
 
@@ -135,11 +131,6 @@ namespace BloggingAgent.Models.Domain
         {
             const int wordsPerMinute = 200;
             return Math.Max(1, (int)Math.Ceiling((double)WordCount / wordsPerMinute));
-        }
-
-        public void MarkAsModified()
-        {
-            UpdatedAt = DateTime.UtcNow;
         }
 
         public void AddDomainEvent(object domainEvent)

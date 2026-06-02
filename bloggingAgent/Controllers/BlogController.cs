@@ -291,7 +291,7 @@ namespace BloggingAgent.Controllers
         [HttpPost]
         [Route("blog/{id}/publish")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Publish(int id)
+        public async Task<IActionResult> Publish(Guid id)
         {
             var post = await _blogPostRepository.GetByIdAsync(id);
             if (post == null)
@@ -302,7 +302,7 @@ namespace BloggingAgent.Controllers
                 return Unauthorized();
 
             post.IsPublished = true;
-            post.UpdatedAt = DateTime.UtcNow;
+            post.MarkAsModified();
             await _blogPostRepository.UpdateAsync(post);
 
             // Clear caches
@@ -318,7 +318,7 @@ namespace BloggingAgent.Controllers
         [HttpPost]
         [Route("blog/{id}/unpublish")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Unpublish(int id)
+        public async Task<IActionResult> Unpublish(Guid id)
         {
             var post = await _blogPostRepository.GetByIdAsync(id);
             if (post == null)
@@ -329,7 +329,7 @@ namespace BloggingAgent.Controllers
                 return Unauthorized();
 
             post.IsPublished = false;
-            post.UpdatedAt = DateTime.UtcNow;
+            post.MarkAsModified();
             await _blogPostRepository.UpdateAsync(post);
 
             // Clear caches
@@ -365,7 +365,7 @@ namespace BloggingAgent.Controllers
         // API endpoints for AJAX operations
         [HttpPost]
         [Route("api/blog/{id}/like")]
-        public async Task<IActionResult> LikePost(int id)
+        public async Task<IActionResult> LikePost(Guid id)
         {
             var post = await _blogPostRepository.GetByIdAsync(id);
             if (post == null)
@@ -377,9 +377,7 @@ namespace BloggingAgent.Controllers
             {
                 analytics = new ContentAnalytics
                 {
-                    Id = id,
-                    BlogPostId = id,
-                    LastUpdated = DateTime.UtcNow
+                    BlogPostId = id
                 };
                 await _analyticsRepository.AddAsync(analytics);
             }
@@ -390,22 +388,19 @@ namespace BloggingAgent.Controllers
             return Json(new { success = true, likes = analytics.Comments });
         }
 
-        private async Task UpdatePostAnalyticsAsync(int postId)
+        private async Task UpdatePostAnalyticsAsync(Guid postId)
         {
             var analytics = await _analyticsRepository.GetByIdAsync(postId);
             if (analytics == null)
             {
                 analytics = new ContentAnalytics
                 {
-                    Id = postId,
-                    BlogPostId = postId,
-                    LastUpdated = DateTime.UtcNow
+                    BlogPostId = postId
                 };
                 await _analyticsRepository.AddAsync(analytics);
             }
 
             analytics.Views++;
-            analytics.LastUpdated = DateTime.UtcNow;
             await _analyticsRepository.UpdateAsync(analytics);
 
             _logger.LogDebug("Updated analytics for post {PostId}: {Views} views", postId, analytics.Views);

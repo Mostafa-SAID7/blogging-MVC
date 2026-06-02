@@ -22,11 +22,11 @@ namespace BloggingAgent.Models.Domain.Services
 
     public interface ICommentDomainService
     {
-        Task<Result<Comment>> CreateCommentAsync(int blogPostId, string content, string authorName, string authorEmail = null);
+        Task<Result<Comment>> CreateCommentAsync(Guid blogPostId, string content, string authorName, string authorEmail = null);
         Task<Result> ApproveCommentAsync(Comment comment);
         Task<Result> RejectCommentAsync(Comment comment);
         Task<Result<bool>> IsCommentSpamAsync(Comment comment);
-        Task<Result<IEnumerable<Comment>>> GetApprovedCommentsAsync(int blogPostId);
+        Task<Result<IEnumerable<Comment>>> GetApprovedCommentsAsync(Guid blogPostId);
     }
 
     public interface IUserDomainService

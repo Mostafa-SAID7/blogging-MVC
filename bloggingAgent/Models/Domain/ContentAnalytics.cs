@@ -1,11 +1,11 @@
 using System;
+using System.Collections.Generic;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class ContentAnalytics
+    public class ContentAnalytics : BaseEntity
     {
-        public int Id { get; set; }
-        public int BlogPostId { get; set; }
+        public Guid BlogPostId { get; set; }
         public virtual BlogPost BlogPost { get; set; }
         public int Views { get; set; }
         public int UniqueViews { get; set; }
@@ -13,7 +13,6 @@ namespace BloggingAgent.Models.Domain
         public int Comments { get; set; }
         public double AverageReadTime { get; set; }
         public double BounceRate { get; set; }
-        public DateTime LastUpdated { get; set; }
         public Dictionary<string, int> TrafficSources { get; set; } = new Dictionary<string, int>();
     }
 }

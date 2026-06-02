@@ -110,7 +110,7 @@ namespace BloggingAgent.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DisconnectAccount(int accountId)
+        public async Task<IActionResult> DisconnectAccount(Guid accountId)
         {
             var user = await _userManager.GetUserAsync(User);
             var account = await _accountRepository.GetByIdAsync(accountId);
@@ -133,12 +133,12 @@ namespace BloggingAgent.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Posts(int accountId = 0)
+        public async Task<IActionResult> Posts(Guid accountId = default)
         {
             var user = await _userManager.GetUserAsync(User);
 
             List<SocialMediaPost> posts;
-            if (accountId > 0)
+            if (accountId != default)
             {
                 // Get posts for specific account
                 var account = await _accountRepository.GetByIdAsync(accountId);
@@ -167,7 +167,7 @@ namespace BloggingAgent.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> CreatePost(int? blogPostId = null)
+        public async Task<IActionResult> CreatePost(Guid? blogPostId = null)
         {
             var user = await _userManager.GetUserAsync(User);
             var accounts = await _accountRepository.FindAsync(a => a.UserId == user.Id && a.IsActive);

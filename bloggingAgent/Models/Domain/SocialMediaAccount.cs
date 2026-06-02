@@ -3,10 +3,8 @@ using System.Collections.Generic;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class SocialMediaAccount
+    public class SocialMediaAccount : BaseEntity
     {
-        public int Id { get; set; }
-
         // User relationship
         public string UserId { get; set; }
         public virtual ApplicationUser User { get; set; }
@@ -39,10 +37,6 @@ namespace BloggingAgent.Models.Domain
         public DateTime? LastPostAt { get; set; }
         public DateTime? LastSyncAt { get; set; }
 
-        // Metadata
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
         // Computed properties
         public bool IsTokenExpired => TokenExpiresAt.HasValue && TokenExpiresAt.Value < DateTime.UtcNow;
         public bool NeedsRefresh => IsTokenExpired && !string.IsNullOrEmpty(RefreshToken);
@@ -59,14 +53,14 @@ namespace BloggingAgent.Models.Domain
             {
                 RefreshToken = refreshToken;
             }
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         public void IncrementPostCount()
         {
             TotalPosts++;
             LastPostAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         public void UpdateStats(int followersCount, int followingCount, string bio = null)
@@ -78,13 +72,13 @@ namespace BloggingAgent.Models.Domain
                 Bio = bio;
             }
             LastSyncAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         public void AddEngagement(int engagementCount)
         {
             TotalEngagement += engagementCount;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         private string GetPlatformDisplayName()

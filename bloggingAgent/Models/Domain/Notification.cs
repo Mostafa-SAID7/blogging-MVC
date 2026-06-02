@@ -2,10 +2,8 @@ using System;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class Notification
+    public class Notification : BaseEntity
     {
-        public int Id { get; set; }
-
         // User relationship
         public string UserId { get; set; }
         public virtual ApplicationUser User { get; set; }
@@ -30,7 +28,6 @@ namespace BloggingAgent.Models.Domain
         public string Priority { get; set; } = "normal"; // "low", "normal", "high", "urgent"
 
         // Metadata
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ExpiresAt { get; set; }
 
         // Computed properties

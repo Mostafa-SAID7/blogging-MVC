@@ -4,9 +4,8 @@ using BloggingAgent.Models.Enums;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class Comment
+    public class Comment : BaseEntity
     {
-        public int Id { get; set; }
 
         [Required]
         [StringLength(1000, MinimumLength = 1)]
@@ -23,22 +22,18 @@ namespace BloggingAgent.Models.Domain
 
         public string AuthorId { get; set; }
         public virtual ApplicationUser Author { get; set; }
-        public string? UserId { get; set; }
+        public string UserId { get; set; }
 
-        public int BlogPostId { get; set; }
+        public Guid BlogPostId { get; set; }
         public virtual BlogPost BlogPost { get; set; }
 
-        public int? ParentCommentId { get; set; }
+        public Guid? ParentCommentId { get; set; }
         public virtual Comment ParentComment { get; set; }
 
         public virtual System.Collections.Generic.ICollection<Comment> Replies { get; set; } = new System.Collections.Generic.List<Comment>();
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
-
         public bool IsApproved { get; set; } = false;
         public bool IsSpam { get; set; } = false;
-        public bool IsDeleted { get; set; } = false;
 
         public string IpAddress { get; set; }
         public string UserAgent { get; set; }

@@ -23,11 +23,11 @@ namespace BloggingAgent.Models.Domain.Events
     // Blog Post Events
     public class BlogPostCreatedEvent : DomainEvent
     {
-        public int BlogPostId { get; }
+        public Guid BlogPostId { get; }
         public string Title { get; }
         public string Author { get; }
 
-        public BlogPostCreatedEvent(int blogPostId, string title, string author)
+        public BlogPostCreatedEvent(Guid blogPostId, string title, string author)
         {
             BlogPostId = blogPostId;
             Title = title;
@@ -37,11 +37,11 @@ namespace BloggingAgent.Models.Domain.Events
 
     public class BlogPostPublishedEvent : DomainEvent
     {
-        public int BlogPostId { get; }
+        public Guid BlogPostId { get; }
         public string Title { get; }
         public DateTime PublishedAt { get; }
 
-        public BlogPostPublishedEvent(int blogPostId, string title, DateTime publishedAt)
+        public BlogPostPublishedEvent(Guid blogPostId, string title, DateTime publishedAt)
         {
             BlogPostId = blogPostId;
             Title = title;
@@ -51,11 +51,11 @@ namespace BloggingAgent.Models.Domain.Events
 
     public class BlogPostUpdatedEvent : DomainEvent
     {
-        public int BlogPostId { get; }
+        public Guid BlogPostId { get; }
         public string Title { get; }
         public string[] ModifiedFields { get; }
 
-        public BlogPostUpdatedEvent(int blogPostId, string title, string[] modifiedFields)
+        public BlogPostUpdatedEvent(Guid blogPostId, string title, string[] modifiedFields)
         {
             BlogPostId = blogPostId;
             Title = title;
@@ -65,11 +65,11 @@ namespace BloggingAgent.Models.Domain.Events
 
     public class BlogPostDeletedEvent : DomainEvent
     {
-        public int BlogPostId { get; }
+        public Guid BlogPostId { get; }
         public string Title { get; }
         public string DeletedBy { get; }
 
-        public BlogPostDeletedEvent(int blogPostId, string title, string deletedBy)
+        public BlogPostDeletedEvent(Guid blogPostId, string title, string deletedBy)
         {
             BlogPostId = blogPostId;
             Title = title;
@@ -80,12 +80,12 @@ namespace BloggingAgent.Models.Domain.Events
     // Comment Events
     public class CommentAddedEvent : DomainEvent
     {
-        public int CommentId { get; }
-        public int BlogPostId { get; }
+        public Guid CommentId { get; }
+        public Guid BlogPostId { get; }
         public string AuthorName { get; }
         public string Content { get; }
 
-        public CommentAddedEvent(int commentId, int blogPostId, string authorName, string content)
+        public CommentAddedEvent(Guid commentId, Guid blogPostId, string authorName, string content)
         {
             CommentId = commentId;
             BlogPostId = blogPostId;
@@ -96,11 +96,11 @@ namespace BloggingAgent.Models.Domain.Events
 
     public class CommentApprovedEvent : DomainEvent
     {
-        public int CommentId { get; }
-        public int BlogPostId { get; }
+        public Guid CommentId { get; }
+        public Guid BlogPostId { get; }
         public string ApprovedBy { get; }
 
-        public CommentApprovedEvent(int commentId, int blogPostId, string approvedBy)
+        public CommentApprovedEvent(Guid commentId, Guid blogPostId, string approvedBy)
         {
             CommentId = commentId;
             BlogPostId = blogPostId;
@@ -110,11 +110,11 @@ namespace BloggingAgent.Models.Domain.Events
 
     public class CommentRejectedEvent : DomainEvent
     {
-        public int CommentId { get; }
-        public int BlogPostId { get; }
+        public Guid CommentId { get; }
+        public Guid BlogPostId { get; }
         public string RejectedBy { get; }
 
-        public CommentRejectedEvent(int commentId, int blogPostId, string rejectedBy)
+        public CommentRejectedEvent(Guid commentId, Guid blogPostId, string rejectedBy)
         {
             CommentId = commentId;
             BlogPostId = blogPostId;
@@ -154,12 +154,12 @@ namespace BloggingAgent.Models.Domain.Events
     // Analytics Events
     public class BlogPostViewedEvent : DomainEvent
     {
-        public int BlogPostId { get; }
+        public Guid BlogPostId { get; }
         public string ViewerIp { get; }
         public string UserAgent { get; }
         public string Referrer { get; }
 
-        public BlogPostViewedEvent(int blogPostId, string viewerIp, string userAgent, string referrer)
+        public BlogPostViewedEvent(Guid blogPostId, string viewerIp, string userAgent, string referrer)
         {
             BlogPostId = blogPostId;
             ViewerIp = viewerIp;
@@ -170,11 +170,11 @@ namespace BloggingAgent.Models.Domain.Events
 
     public class BlogPostSharedEvent : DomainEvent
     {
-        public int BlogPostId { get; }
+        public Guid BlogPostId { get; }
         public string Platform { get; } // Twitter, Facebook, LinkedIn, etc.
         public string SharedBy { get; }
 
-        public BlogPostSharedEvent(int blogPostId, string platform, string sharedBy)
+        public BlogPostSharedEvent(Guid blogPostId, string platform, string sharedBy)
         {
             BlogPostId = blogPostId;
             Platform = platform;

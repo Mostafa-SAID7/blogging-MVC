@@ -1,4 +1,4 @@
-@model int
+@model Guid
 
 @using BloggingAgent.Data.Repositories
 @using BloggingAgent.Models.Domain
@@ -120,7 +120,7 @@ else
 </script>
 
 @{
-    async Task<int> GetCommentCountAsync(int postId)
+    async Task<int> GetCommentCountAsync(Guid postId)
     {
         var repository = ViewContext.HttpContext.RequestServices.GetService<IRepository<Comment>>();
         return await repository.CountAsync(c => c.BlogPostId == postId && c.IsApproved && !c.IsSpam);

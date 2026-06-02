@@ -3,15 +3,13 @@ using System.Collections.Generic;
 
 namespace BloggingAgent.Models.Domain
 {
-    public class SocialMediaPost
+    public class SocialMediaPost : BaseEntity
     {
-        public int Id { get; set; }
-
         // Relationships
-        public int SocialMediaAccountId { get; set; }
+        public Guid SocialMediaAccountId { get; set; }
         public virtual SocialMediaAccount Account { get; set; }
 
-        public int? BlogPostId { get; set; }
+        public Guid? BlogPostId { get; set; }
         public virtual BlogPost BlogPost { get; set; }
 
         // Platform-specific IDs
@@ -51,10 +49,6 @@ namespace BloggingAgent.Models.Domain
         public string Tags { get; set; } // Comma-separated tags
         public string Campaign { get; set; } // Marketing campaign identifier
 
-        // Timestamps
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
         // Computed properties
         public bool IsPosted => Status == "posted";
         public bool IsScheduled => Status == "scheduled";
@@ -71,7 +65,7 @@ namespace BloggingAgent.Models.Domain
             Status = "posted";
             PlatformPostId = platformPostId;
             PostedAt = postedAt;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         public void MarkAsFailed(string errorMessage)
@@ -80,7 +74,7 @@ namespace BloggingAgent.Models.Domain
             ErrorMessage = errorMessage;
             RetryCount++;
             LastRetryAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         public void ResetForRetry()
@@ -88,7 +82,7 @@ namespace BloggingAgent.Models.Domain
             Status = "scheduled";
             ErrorMessage = null;
             LastRetryAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         public void UpdateEngagement(int likes, int shares, int comments, int views = 0, int reach = 0, int impressions = 0)
@@ -107,14 +101,14 @@ namespace BloggingAgent.Models.Domain
             }
 
             LastSyncedAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         public void Schedule(DateTime scheduledAt)
         {
             Status = "scheduled";
             ScheduledAt = scheduledAt;
-            UpdatedAt = DateTime.UtcNow;
+            MarkAsModified();
         }
 
         private string GetStatusDisplay()

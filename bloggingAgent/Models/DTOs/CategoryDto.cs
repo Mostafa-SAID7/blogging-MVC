@@ -1,16 +1,17 @@
+using System;
 using System.Collections.Generic;
 
 namespace BloggingAgent.Models.DTOs
 {
     public class CategoryDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Name { get; set; }
         public string Slug { get; set; }
         public string Description { get; set; }
         public string Color { get; set; }
         public string Icon { get; set; }
-        public int? ParentCategoryId { get; set; }
+        public Guid? ParentCategoryId { get; set; }
         public bool IsActive { get; set; }
         public int DisplayOrder { get; set; }
         public int PostCount { get; set; }
@@ -22,7 +23,7 @@ namespace BloggingAgent.Models.DTOs
         public string Description { get; set; }
         public string Color { get; set; }
         public string Icon { get; set; }
-        public int? ParentCategoryId { get; set; }
+        public Guid? ParentCategoryId { get; set; }
         public int DisplayOrder { get; set; }
     }
 
@@ -32,7 +33,7 @@ namespace BloggingAgent.Models.DTOs
         public string Description { get; set; }
         public string Color { get; set; }
         public string Icon { get; set; }
-        public int? ParentCategoryId { get; set; }
+        public Guid? ParentCategoryId { get; set; }
         public int DisplayOrder { get; set; }
         public bool IsActive { get; set; }
     }
