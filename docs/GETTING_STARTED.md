@@ -134,33 +134,28 @@ docker-compose logs -f
 docker-compose down
 ```
 
-## Database
+## Database Configuration
 
-### Working with Migrations
+### SQL Server (Recommended for Production)
 
-```bash
-# Create new migration
-dotnet ef migrations add MigrationName
-
-# Apply migrations
-dotnet ef database update
-
-# View migration history
-dotnet ef migrations list
-
-# Revert to previous migration
-dotnet ef database update PreviousMigrationName
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=your-server.databaseasp.net; Database=your-db; User Id=your-user; Password=your-password; Encrypt=True; TrustServerCertificate=True; MultipleActiveResultSets=True;"
+  }
+}
 ```
 
-### Resetting Database
+**Connection String Parameters:**
+- `Server` - Your SQL Server host/endpoint
+- `Database` - Database name
+- `User Id` - Username for authentication
+- `Password` - Password for authentication
+- `Encrypt=True` - Enable connection encryption
+- `TrustServerCertificate=True` - Trust self-signed certificates (production: False)
+- `MultipleActiveResultSets=True` - Allow multiple queries
 
-```bash
-# Drop database (CAUTION: This deletes all data)
-dotnet ef database drop
-
-# Recreate with seed data
-dotnet ef database update
-```
+### SQLite (Default - Development Only)
 
 ## Troubleshooting
 

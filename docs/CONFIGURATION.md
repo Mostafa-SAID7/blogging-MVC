@@ -80,23 +80,45 @@ export OPENAI_API_KEY=sk-your-key-here
 
 ### Database Configuration
 
-SQLite (default):
+#### SQL Server (Production Recommended)
+
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=bloggingagent.db"
+    "DefaultConnection": "Server=your-server.databaseasp.net; Database=your-db; User Id=your-user; Password=your-password; Encrypt=True; TrustServerCertificate=True; MultipleActiveResultSets=True;"
   }
 }
 ```
 
-PostgreSQL (alternative):
+**Parameters:**
+- `Server` - SQL Server hostname or IP address
+- `Database` - Database name
+- `User Id` - SQL Server authentication user
+- `Password` - User password
+- `Encrypt=True` - Encrypt connection (recommended)
+- `TrustServerCertificate=True` - Trust self-signed certs (set to False in production)
+- `MultipleActiveResultSets=True` - Allow multiple active queries
+
+**Example with Your Database:**
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=bloggingagent;Username=user;Password=password"
+    "DefaultConnection": "Server=db54433.public.databaseasp.net; Database=db54433; User Id=db54433; Password=h#7LNr-28=Xb; Encrypt=True; TrustServerCertificate=True; MultipleActiveResultSets=True;"
   }
 }
 ```
+
+#### PostgreSQL (Alternative for Production)
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=blogging_agent;Username=user;Password=password;Port=5432;SSL Mode=Require"
+  }
+}
+```
+
+#### SQLite (Development Only)
 
 ### Content Settings
 
