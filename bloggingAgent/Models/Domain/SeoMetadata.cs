@@ -16,7 +16,7 @@ namespace BloggingAgent.Models.Domain
         public string TwitterCard { get; set; }
         public Dictionary<string, string> StructuredData { get; set; } = new Dictionary<string, string>();
         
-        // Navigation property for consistency
-        public virtual BlogPost BlogPost { get; set; }
+        // Note: Navigation property removed to prevent shadow key generation.
+        // The relationship is fully configured in BlogPostConfiguration.
     }
 }

@@ -220,7 +220,7 @@ namespace BloggingAgent.Models.Domain.Infrastructure
             ApplyOrderByDescending(x => x.Views);
             ApplyPaging(0, count);
 
-            AddInclude(x => x.BlogPost);
+            // Note: Navigation property removed - access BlogPost through BlogPostId if needed
         }
     }
 
@@ -229,7 +229,7 @@ namespace BloggingAgent.Models.Domain.Infrastructure
         public AnalyticsSummarySpec(DateTime startDate, DateTime endDate)
         {
             SetCriteria(x => x.UpdatedAt >= startDate && x.UpdatedAt <= endDate);
-            AddInclude(x => x.BlogPost);
+            // Note: Navigation property removed - access BlogPost through BlogPostId if needed
         }
     }
 

@@ -107,7 +107,16 @@ Start your AI blogging journey today with BloggingAgent!",
                         Title = "Getting Started with AI-Powered Blogging | BloggingAgent",
                         Description = "Learn how AI-powered blogging platforms can help you create better content faster. Discover the benefits and best practices for AI-assisted blogging.",
                         Keywords = "AI blogging, content creation, artificial intelligence, blogging platform",
-                        CanonicalUrl = "/blog/getting-started-ai-blogging"
+                        CanonicalUrl = "/blog/getting-started-ai-blogging",
+                        OgTitle = "Getting Started with AI-Powered Blogging",
+                        OgDescription = "Learn how AI-powered blogging platforms can help you create better content faster.",
+                        OgImage = "https://bloggingagent.com/images/og-ai-blogging.jpg",
+                        TwitterCard = "summary_large_image",
+                        StructuredData = new Dictionary<string, string>
+                        {
+                            { "type", "Article" },
+                            { "headline", "Getting Started with AI-Powered Blogging" }
+                        }
                     },
                     Analytics = new ContentAnalytics
                     {
@@ -180,7 +189,16 @@ Machine Learning is transforming how we build software and solve problems. The p
                         Title = "The Rise of Machine Learning in Modern Applications",
                         Description = "Discover how machine learning is transforming industries from healthcare to transportation. Learn about current applications and future trends.",
                         Keywords = "machine learning, artificial intelligence, applications, technology trends",
-                        CanonicalUrl = "/blog/rise-machine-learning-modern-applications"
+                        CanonicalUrl = "/blog/rise-machine-learning-modern-applications",
+                        OgTitle = "The Rise of Machine Learning in Modern Applications",
+                        OgDescription = "Discover how machine learning is transforming industries and what the future holds.",
+                        OgImage = "https://bloggingagent.com/images/og-machine-learning.jpg",
+                        TwitterCard = "summary_large_image",
+                        StructuredData = new Dictionary<string, string>
+                        {
+                            { "type", "Article" },
+                            { "headline", "The Rise of Machine Learning in Modern Applications" }
+                        }
                     },
                     Analytics = new ContentAnalytics
                     {
@@ -297,7 +315,16 @@ Stay updated with SEO best practices and continuously optimize your content for 
                         Title = "SEO Best Practices for 2024 | Complete Guide",
                         Description = "Master SEO in 2024 with this comprehensive guide. Learn technical SEO, content optimization, and emerging trends for better search rankings.",
                         Keywords = "SEO, search engine optimization, SEO best practices, digital marketing, 2024 SEO trends",
-                        CanonicalUrl = "/blog/seo-best-practices-2024"
+                        CanonicalUrl = "/blog/seo-best-practices-2024",
+                        OgTitle = "SEO Best Practices for 2024",
+                        OgDescription = "Master SEO in 2024 with comprehensive guide on technical SEO and content optimization.",
+                        OgImage = "https://bloggingagent.com/images/og-seo-2024.jpg",
+                        TwitterCard = "summary_large_image",
+                        StructuredData = new Dictionary<string, string>
+                        {
+                            { "type", "Article" },
+                            { "headline", "SEO Best Practices for 2024" }
+                        }
                     },
                     Analytics = new ContentAnalytics
                     {
