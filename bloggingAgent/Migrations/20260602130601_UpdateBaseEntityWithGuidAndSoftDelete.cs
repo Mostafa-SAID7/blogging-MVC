@@ -375,7 +375,6 @@ namespace bloggingAgent.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
                     BlogPostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BlogPostId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Views = table.Column<int>(type: "int", nullable: false),
                     UniqueViews = table.Column<int>(type: "int", nullable: false),
                     Shares = table.Column<int>(type: "int", nullable: false),
@@ -396,13 +395,7 @@ namespace bloggingAgent.Migrations
                         column: x => x.BlogPostId,
                         principalTable: "BlogPosts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ContentAnalytics_BlogPosts_BlogPostId1",
-                        column: x => x.BlogPostId1,
-                        principalTable: "BlogPosts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
@@ -420,7 +413,6 @@ namespace bloggingAgent.Migrations
                     OgImage = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     TwitterCard = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     StructuredData = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    BlogPostId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
@@ -434,13 +426,7 @@ namespace bloggingAgent.Migrations
                         column: x => x.BlogPostId,
                         principalTable: "BlogPosts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SeoMetadata_BlogPosts_BlogPostId1",
-                        column: x => x.BlogPostId1,
-                        principalTable: "BlogPosts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateIndex(
@@ -606,11 +592,6 @@ namespace bloggingAgent.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ContentAnalytics_BlogPostId1",
-                table: "ContentAnalytics",
-                column: "BlogPostId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ContentAnalytics_IsDeleted",
                 table: "ContentAnalytics",
                 column: "IsDeleted");
@@ -620,11 +601,6 @@ namespace bloggingAgent.Migrations
                 table: "SeoMetadata",
                 column: "BlogPostId",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SeoMetadata_BlogPostId1",
-                table: "SeoMetadata",
-                column: "BlogPostId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SeoMetadata_IsDeleted",
